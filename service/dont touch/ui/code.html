@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Multi-Layer Flight Anomaly Detection System</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200/10 dark:border-white/10 px-4 sm:px-8 md:px-16 lg:px-24 py-4">
+<div class="flex items-center gap-4 text-black dark:text-white">
+<div class="size-6">
+<svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M24 18.4228L42 11.475V34.3663C42 34.7796 41.7457 35.1504 41.3601 35.2992L24 42V18.4228Z" fill-rule="evenodd"></path>
+<path clip-rule="evenodd" d="M24 8.18819L33.4123 11.574L24 15.2071L14.5877 11.574L24 8.18819ZM9 15.8487L21 20.4805V37.6263L9 32.9945V15.8487ZM27 37.6263V20.4805L39 15.8487V32.9945L27 37.6263ZM25.354 2.29885C24.4788 1.98402 23.5212 1.98402 22.646 2.29885L4.98454 8.65208C3.7939 9.08038 3 10.2097 3 11.475V34.3663C3 36.0196 4.01719 37.5026 5.55962 38.098L22.9197 44.7987C23.6149 45.0671 24.3851 45.0671 25.0803 44.7987L42.4404 38.098C43.9828 37.5026 45 36.0196 45 34.3663V11.475C45 10.2097 44.2061 9.08038 43.0155 8.65208L25.354 2.29885Z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Multi-Layer Flight Anomaly Detection</h2>
+</div>
+<div class="flex flex-1 justify-end items-center gap-4">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-gray-200/50 dark:bg-white/10 text-gray-800 dark:text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-gray-200/50 dark:bg-white/10 text-gray-800 dark:text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User avatar image" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBRWfVa7vNDKV9ZXskCJ0JAdGUlCek0I7FydLMkDWaehdRwjvcHccXiO3PBWk7l5B8-SY73aCLCW_QOpdy1w61sX9m91HfAPl7gbxo2zOpJCP0r30pROr80j0rFAkVU9b7tVNZhNAsmz1LVo1zYjss2ME4bT_besQQaOdCrD2m1Ft_34gT4e2mgvw9LlvBl42-QNNLkjnNIj8TKGh7hVEUg4gmrl3fH1h1SDbqiQ-8iE_I4DiQNOYj14Zh0DhngBijHf0u7uXY0losB");'></div>
+</div>
+</header>
+<main class="flex-1 px-4 sm:px-8 md:px-16 lg:px-24 py-8">
+<div class="flex flex-col gap-8 max-w-7xl mx-auto">
+<div class="flex flex-col gap-6">
+<p class="text-black dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Flight Anomaly Detection System</p>
+<div class="flex flex-col sm:flex-row items-end gap-4 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10">
+<label class="flex flex-col min-w-40 flex-1">
+<p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal pb-2">Flight ID</p>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-black dark:text-white focus:outline-0 focus:ring-0 border border-gray-300 dark:border-white/20 bg-background-light dark:bg-background-dark focus:border-primary h-12 placeholder:text-gray-400 dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal" placeholder="Enter Flight ID (e.g., UA-123)" value="AF-456"/>
+</label>
+<button class="flex w-full sm:w-auto min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Analyze Flight</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-6">
+<div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10">
+<h2 class="text-black dark:text-white text-xl sm:text-2xl font-bold leading-tight tracking-[-0.015em]">Results for Flight AF-456</h2>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 text-red-400">
+<span class="material-symbols-outlined text-base">warning</span>
+<span class="text-sm font-semibold">Overall Status: ANOMALY DETECTED</span>
+</div>
+</div>
+<div class="relative w-full aspect-[16/8] rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800 border border-gray-200/50 dark:border-white/10">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA-KaP9vwZ3ppEhR2pYJ1GUYNKTA342oonZo5AhDVPPEDvx8M81GmPYf-WhfkcSpRhIHYfG7e2v9isvyadirh4BouNQLSQEDt_eHJrQOiDQZ5cZKaHCGArlifm05jFD7GgPpHzca3ecmvkAOZ-fhmGYq784AItBNaPMqioHv9kHHZ5DO6RUcJZ33GiYlB-UNY6RAM_9hWhKkAXG1PB3F8QZOFuP8Or8RsnkRc2pYXl1IlKwUcVW33P0xUJk9ZK6ICEgOMCKBHoGoJxl')"></div>
+<div class="absolute inset-0 flex items-center justify-center p-8">
+<svg class="w-full h-full" preserveAspectRatio="xMidYMid meet" viewBox="0 0 800 400">
+<defs>
+<marker id="arrow" markerHeight="6" markerWidth="6" orient="auto-start-reverse" refX="5" refY="5" viewBox="0 0 10 10">
+<path d="M 0 0 L 10 5 L 0 10 z" fill="#135bec"></path>
+</marker>
+</defs>
+<path d="M 100,280 C 200,100 600,100 700,280" fill="none" marker-end="url(#arrow)" stroke="#135bec" stroke-width="4"></path>
+<path d="M 350,123.75 C 400,112.5 450,112.5 500,123.75" fill="none" stroke="#ef4444" stroke-linecap="round" stroke-width="6"></path>
+<g transform="translate(100, 280)">
+<circle cx="0" cy="0" fill="#135bec" r="10"></circle>
+<circle cx="0" cy="0" fill="white" r="6"></circle>
+</g>
+<g transform="translate(700, 280)">
+<circle cx="0" cy="0" fill="#135bec" r="10"></circle>
+<circle cx="0" cy="0" fill="white" r="6"></circle>
+</g>
+<text fill="white" font-family="Space Grotesk" font-size="16" font-weight="bold" text-anchor="end" x="90" y="305">JFK</text>
+<text fill="white" font-family="Space Grotesk" font-size="16" font-weight="bold" text-anchor="start" x="710" y="305">CDG</text>
+</svg>
+</div>
+<div class="absolute top-4 left-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm">
+<p class="font-bold">Flight Path: JFK to CDG</p>
+<p>Anomalous segment detected.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-4 rounded-xl bg-gray-50 dark:bg-white/5 p-6 border border-gray-200/50 dark:border-white/10">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold text-black dark:text-white">Rule Engine Analysis</h3>
+<span class="text-sm font-semibold px-3 py-1 rounded-full bg-green-500/10 text-green-400">NORMAL</span>
+</div>
+<div class="flex flex-col gap-3 text-sm">
+<div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+<span class="text-gray-500 dark:text-gray-400">Anomaly Score</span>
+<span class="font-medium text-black dark:text-white">0.12</span>
+</div>
+<div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+<span class="text-gray-500 dark:text-gray-400">Threshold</span>
+<span class="font-medium text-black dark:text-white">0.85</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-gray-500 dark:text-gray-400">Cluster ID</span>
+<span class="font-medium text-black dark:text-white">C-101</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 pt-2">
+<label class="text-sm text-gray-500 dark:text-gray-400">Severity</label>
+<div class="w-full bg-gray-200/50 dark:bg-white/10 rounded-full h-2.5">
+<div class="bg-green-500 h-2.5 rounded-full" style="width: 12%"></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-4 rounded-xl bg-gray-50 dark:bg-white/5 p-6 border border-gray-200/50 dark:border-white/10">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold text-black dark:text-white">XGBoost Model Analysis</h3>
+<span class="text-sm font-semibold px-3 py-1 rounded-full bg-red-500/10 text-red-400">ANOMALY</span>
+</div>
+<div class="flex flex-col gap-3 text-sm">
+<div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+<span class="text-gray-500 dark:text-gray-400">Anomaly Score</span>
+<span class="font-medium text-black dark:text-white">0.91</span>
+</div>
+<div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+<span class="text-gray-500 dark:text-gray-400">Threshold</span>
+<span class="font-medium text-black dark:text-white">0.90</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-gray-500 dark:text-gray-400">Cluster ID</span>
+<span class="font-medium text-black dark:text-white">C-245</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 pt-2">
+<label class="text-sm text-gray-500 dark:text-gray-400">Severity</label>
+<div class="w-full bg-gray-200/50 dark:bg-white/10 rounded-full h-2.5">
+<div class="bg-red-500 h-2.5 rounded-full" style="width: 91%"></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-4 rounded-xl bg-gray-50 dark:bg-white/5 p-6 border border-gray-200/50 dark:border-white/10">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold text-black dark:text-white">Deep Dense Network Analysis</h3>
+<span class="text-sm font-semibold px-3 py-1 rounded-full bg-green-500/10 text-green-400">NORMAL</span>
+</div>
+<div class="flex flex-col gap-3 text-sm">
+<div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+<span class="text-gray-500 dark:text-gray-400">Anomaly Score</span>
+<span class="font-medium text-black dark:text-white">0.78</span>
+</div>
+<div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+<span class="text-gray-500 dark:text-gray-400">Threshold</span>
+<span class="font-medium text-black dark:text-white">0.95</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-gray-500 dark:text-gray-400">Cluster ID</span>
+<span class="font-medium text-black dark:text-white">C-188</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 pt-2">
+<label class="text-sm text-gray-500 dark:text-gray-400">Severity</label>
+<div class="w-full bg-gray-200/50 dark:bg-white/10 rounded-full h-2.5">
+<div class="bg-green-500 h-2.5 rounded-full" style="width: 78%"></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-4 rounded-xl bg-gray-50 dark:bg-white/5 p-6 border border-gray-200/50 dark:border-white/10">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold text-black dark:text-white">Deep CNN Model Analysis</h3>
+<span class="text-sm font-semibold px-3 py-1 rounded-full bg-red-500/10 text-red-400">ANOMALY</span>
+</div>
+<div class="flex flex-col gap-3 text-sm">
+<div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+<span class="text-gray-500 dark:text-gray-400">Anomaly Score</span>
+<span class="font-medium text-black dark:text-white">0.96</span>
+</div>
+<div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+<span class="text-gray-500 dark:text-gray-400">Threshold</span>
+<span class="font-medium text-black dark:text-white">0.92</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-gray-500 dark:text-gray-400">Cluster ID</span>
+<span class="font-medium text-black dark:text-white">C-302</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 pt-2">
+<label class="text-sm text-gray-500 dark:text-gray-400">Severity</label>
+<div class="w-full bg-gray-200/50 dark:bg-white/10 rounded-full h-2.5">
+<div class="bg-red-500 h-2.5 rounded-full" style="width: 96%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+
+</body></html>

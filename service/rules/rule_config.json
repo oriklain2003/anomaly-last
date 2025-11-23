@@ -1,0 +1,76 @@
+{
+  "emergency_squawks": ["7500", "7600", "7700"],
+  "airports": [
+    { "code": "LLBG", "name": "Ben Gurion Intl", "lat": 32.011389, "lon": 34.886667 },
+    { "code": "LLER", "name": "Ramon Intl", "lat": 29.723704, "lon": 35.01145 },
+    { "code": "LLHA", "name": "Haifa", "lat": 32.809444, "lon": 35.043056 },
+    { "code": "LLSD", "name": "Sde Dov", "lat": 32.114722, "lon": 34.781944 },
+    { "code": "LLBS", "name": "Beersheba", "lat": 31.287, "lon": 34.723 },
+    { "code": "LLET", "name": "Eilat (J. Hozman)", "lat": 29.561111, "lon": 34.960833 },
+    { "code": "LLOV", "name": "Ovda", "lat": 29.940, "lon": 34.935 },
+    { "code": "LLNV", "name": "Nevatim AFB", "lat": 31.207, "lon": 35.012 },
+    { "code": "LLMG", "name": "Megiddo", "lat": 32.597, "lon": 35.228 },
+    { "code": "LLHZ", "name": "Herzliya", "lat": 32.186, "lon": 34.835 },
+{ "code": "LCRA", "name": "RAF Akrotiri", "lat": 34.5900, "lon": 32.9870 },
+
+    { "code": "OLBA", "name": "Beirut Rafic Hariri Intl", "lat": 33.820889, "lon": 35.488389 },
+    { "code": "OLKA", "name": "Rayak Air Base", "lat": 33.850, "lon": 35.987 },
+
+    { "code": "OJAI", "name": "Queen Alia Intl (Amman)", "lat": 31.722556, "lon": 35.993214 },
+    { "code": "OJAM", "name": "Amman–Marka Intl", "lat": 31.972, "lon": 35.991 },
+    { "code": "OJAQ", "name": "King Hussein Intl (Aqaba)", "lat": 29.611, "lon": 35.018 },
+    { "code": "OJMF", "name": "Mafraq", "lat": 32.356, "lon": 36.259 },
+    { "code": "HEGR", "name": "El Gora Airport", "lat": 31.0686, "lon": 34.1296 },
+
+    {"code": "ALJAWZAH","name": "Al-Jawzah Airport","lat": 31.7288,"lon": 52.3827},
+
+
+    { "code": "OSDI", "name": "Damascus Intl", "lat": 33.411, "lon": 36.516 }
+]
+,
+  "rules": {
+    "altitude_change": {
+      "delta_ft": 4000,
+      "window_seconds": 60,
+      "min_cruise_ft": 10000
+    },
+    "abrupt_turn": {
+      "heading_change_deg": 150,
+      "window_seconds": 90,
+      "min_speed_kts": 200,
+      "accumulated_turn_deg": 270,
+      "accumulation_window_seconds": 300
+    },
+    "proximity": {
+      "distance_nm": 5,
+      "altitude_ft": 1000,
+      "time_window_seconds": 7
+    },
+    "route_deviation": {
+      "cross_track_nm": 10
+    },
+    "go_around": {
+      "radius_nm": 4,
+      "min_low_alt_ft": 300,
+      "recovery_ft": 400
+    },
+    "return_to_field": {
+      "near_airport_nm": 10,
+      "takeoff_alt_ft": 1500,
+      "landing_alt_ft": 800,
+      "time_limit_seconds": 600
+    },
+    "diversion": {
+      "near_airport_nm": 10
+    },
+    "low_altitude": {
+      "threshold_ft": 800,
+      "airport_radius_nm": 12
+    },
+    "signal_loss": {
+      "gap_seconds": 180,
+      "repeat_count": 2
+    }
+  }
+}
+

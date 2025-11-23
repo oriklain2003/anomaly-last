@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Multi-Layer Flight Anomaly Detection System</title>
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    
+    <!-- MapLibre GL JS -->
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24
+        }
+        #map { width: 100%; height: 100%; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+    <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+        <div class="layout-container flex h-full grow flex-col">
+            
+            <!-- Header -->
+            <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200/10 dark:border-white/10 px-4 sm:px-8 md:px-16 lg:px-24 py-4">
+                <div class="flex items-center gap-4 text-black dark:text-white">
+                    <div class="size-6 text-primary">
+                        <svg fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path clip-rule="evenodd" d="M24 18.4228L42 11.475V34.3663C42 34.7796 41.7457 35.1504 41.3601 35.2992L24 42V18.4228Z" fill-rule="evenodd"></path>
+                            <path clip-rule="evenodd" d="M24 8.18819L33.4123 11.574L24 15.2071L14.5877 11.574L24 8.18819ZM9 15.8487L21 20.4805V37.6263L9 32.9945V15.8487ZM27 37.6263V20.4805L39 15.8487V32.9945L27 37.6263ZM25.354 2.29885C24.4788 1.98402 23.5212 1.98402 22.646 2.29885L4.98454 8.65208C3.7939 9.08038 3 10.2097 3 11.475V34.3663C3 36.0196 4.01719 37.5026 5.55962 38.098L22.9197 44.7987C23.6149 45.0671 24.3851 45.0671 25.0803 44.7987L42.4404 38.098C43.9828 37.5026 45 36.0196 45 34.3663V11.475C45 10.2097 44.2061 9.08038 43.0155 8.65208L25.354 2.29885Z" fill-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Multi-Layer Flight Anomaly Detection</h2>
+                </div>
+                <div class="flex flex-1 justify-end items-center gap-4">
+                    <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-gray-200/50 dark:bg-white/10 text-gray-800 dark:text-white text-sm font-bold leading-normal tracking-[0.015em]">
+                        <span class="material-symbols-outlined">settings</span>
+                    </button>
+                    <button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 w-10 bg-gray-200/50 dark:bg-white/10 text-gray-800 dark:text-white text-sm font-bold leading-normal tracking-[0.015em]">
+                        <span class="material-symbols-outlined">help</span>
+                    </button>
+                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 bg-gray-300"></div>
+                </div>
+            </header>
+
+            <main class="flex-1 px-4 sm:px-8 md:px-16 lg:px-24 py-8">
+                <div class="flex flex-col gap-8 max-w-7xl mx-auto">
+                    
+                    <p class="text-black dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">Flight Anomaly Detection System</p>
+
+                    <!-- Navigation Tabs -->
+                    <div class="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-4">
+                        <button id="tabAnalyze" onclick="switchTab('analyze')" class="px-4 py-2 border-b-2 border-primary font-bold text-primary transition-colors">
+                            Analyze
+                        </button>
+                        <button id="tabSearch" onclick="switchTab('search')" class="px-4 py-2 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                            Search
+                        </button>
+                    </div>
+
+                    <!-- Analyze Page Input -->
+                    <div id="analyzePage" class="flex flex-col gap-6">
+                        <div class="flex flex-col sm:flex-row items-end gap-4 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10">
+                            <label class="flex flex-col min-w-40 flex-1">
+                                <p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal pb-2">Flight ID</p>
+                                <input id="flightIdInput" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-black dark:text-white focus:outline-0 focus:ring-0 border border-gray-300 dark:border-white/20 bg-background-light dark:bg-background-dark focus:border-primary h-12 placeholder:text-gray-400 dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal" placeholder="Enter Flight ID (e.g., 3bc6854c)" value="3bc6854c"/>
+                            </label>
+                            <button onclick="analyzeFlight()" class="flex w-full sm:w-auto min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-blue-700 transition-colors">
+                                <span class="truncate">Analyze Flight</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search Page Input -->
+                    <div id="searchPage" class="hidden flex flex-col gap-6">
+                        <div class="flex flex-col gap-4 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <label class="flex flex-col">
+                                    <p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal pb-2">Call Sign</p>
+                                    <input id="searchCallsign" class="form-input w-full rounded-lg text-black dark:text-white bg-background-light dark:bg-background-dark border border-gray-300 dark:border-white/20 h-12 px-4" placeholder="e.g., CYF461" value="CYF461"/>
+                                </label>
+                                <label class="flex flex-col">
+                                    <p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal pb-2">From Date</p>
+                                    <input id="searchFrom" type="datetime-local" class="form-input w-full rounded-lg text-black dark:text-white bg-background-light dark:bg-background-dark border border-gray-300 dark:border-white/20 h-12 px-4"/>
+                                </label>
+                                <label class="flex flex-col">
+                                    <p class="text-gray-600 dark:text-gray-300 text-base font-medium leading-normal pb-2">To Date</p>
+                                    <input id="searchTo" type="datetime-local" class="form-input w-full rounded-lg text-black dark:text-white bg-background-light dark:bg-background-dark border border-gray-300 dark:border-white/20 h-12 px-4"/>
+                                </label>
+                            </div>
+                            <button onclick="searchFlight()" class="self-end flex w-full sm:w-auto min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-12 px-8 bg-primary text-white text-base font-bold hover:bg-blue-700 transition-colors">
+                                Search & Analyze
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Results Header (Shared) -->
+                    <div class="flex flex-col gap-6">
+                        <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10">
+                            <h2 class="text-black dark:text-white text-xl sm:text-2xl font-bold leading-tight tracking-[-0.015em]">Results for Flight <span id="resultFlightId">...</span></h2>
+                            <div id="overallStatus" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-500/10 text-gray-400">
+                                <span class="material-symbols-outlined text-base">info</span>
+                                <span class="text-sm font-semibold">Waiting for analysis...</span>
+                            </div>
+                        </div>
+
+                        <!-- Map Section -->
+                        <div class="relative w-full aspect-[16/8] rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800 border border-gray-200/50 dark:border-white/10">
+                            <div id="map"></div>
+                            
+                            <!-- Map Overlay Info -->
+                            <div class="absolute top-4 left-4 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm z-10">
+                                <p class="font-bold">Flight Path Visualization</p>
+                                <p class="text-xs opacity-80">Red segments indicate anomaly detections.</p>
+                            </div>
+                        </div>
+
+                        <!-- Cards Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="cardsContainer">
+                            
+                            <!-- Template Card (Rule Engine) -->
+                            <div id="cardRules" class="flex flex-col gap-4 rounded-xl bg-gray-50 dark:bg-white/5 p-6 border border-gray-200/50 dark:border-white/10 opacity-50">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-bold text-black dark:text-white">Rule Engine Analysis</h3>
+                                    <span id="statusRules" class="text-sm font-semibold px-3 py-1 rounded-full bg-gray-500/10 text-gray-400">PENDING</span>
+                                </div>
+                                <div class="flex flex-col gap-3 text-sm" id="rulesList">
+                                    <!-- Dynamic Rule Items will go here -->
+                                    <div class="flex items-center gap-2 text-gray-500">
+                                        <span class="material-symbols-outlined text-sm">hourglass_empty</span>
+                                        <span>Waiting for analysis...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Template Card (XGBoost) -->
+                            <div id="cardXGB" class="flex flex-col gap-4 rounded-xl bg-gray-50 dark:bg-white/5 p-6 border border-gray-200/50 dark:border-white/10 opacity-50">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-bold text-black dark:text-white">XGBoost Model Analysis</h3>
+                                    <span id="statusXGB" class="text-sm font-semibold px-3 py-1 rounded-full bg-gray-500/10 text-gray-400">PENDING</span>
+                                </div>
+                                <div class="flex flex-col gap-3 text-sm">
+                                    <div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+                                        <span class="text-gray-500 dark:text-gray-400">Anomaly Score</span>
+                                        <span id="valXGBScore" class="font-medium text-black dark:text-white">-</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-2 pt-2">
+                                    <label class="text-sm text-gray-500 dark:text-gray-400">Probability</label>
+                                    <div class="w-full bg-gray-200/50 dark:bg-white/10 rounded-full h-2.5">
+                                        <div id="barXGB" class="bg-gray-500 h-2.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Template Card (Deep Dense) -->
+                            <div id="cardDense" class="flex flex-col gap-4 rounded-xl bg-gray-50 dark:bg-white/5 p-6 border border-gray-200/50 dark:border-white/10 opacity-50">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-bold text-black dark:text-white">Deep Dense Analysis</h3>
+                                    <span id="statusDense" class="text-sm font-semibold px-3 py-1 rounded-full bg-gray-500/10 text-gray-400">PENDING</span>
+                                </div>
+                                <div class="flex flex-col gap-3 text-sm">
+                                    <div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+                                        <span class="text-gray-500 dark:text-gray-400">Severity</span>
+                                        <span id="valDenseSev" class="font-medium text-black dark:text-white">-</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-2 pt-2">
+                                    <label class="text-sm text-gray-500 dark:text-gray-400">Severity Ratio</label>
+                                    <div class="w-full bg-gray-200/50 dark:bg-white/10 rounded-full h-2.5">
+                                        <div id="barDense" class="bg-gray-500 h-2.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Template Card (Deep CNN) -->
+                            <div id="cardCNN" class="flex flex-col gap-4 rounded-xl bg-gray-50 dark:bg-white/5 p-6 border border-gray-200/50 dark:border-white/10 opacity-50">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-bold text-black dark:text-white">Deep CNN Analysis</h3>
+                                    <span id="statusCNN" class="text-sm font-semibold px-3 py-1 rounded-full bg-gray-500/10 text-gray-400">PENDING</span>
+                                </div>
+                                <div class="flex flex-col gap-3 text-sm">
+                                    <div class="flex justify-between items-center border-b border-gray-200/50 dark:border-white/10 pb-2">
+                                        <span class="text-gray-500 dark:text-gray-400">Severity</span>
+                                        <span id="valCNNSev" class="font-medium text-black dark:text-white">-</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-2 pt-2">
+                                    <label class="text-sm text-gray-500 dark:text-gray-400">Severity Ratio</label>
+                                    <div class="w-full bg-gray-200/50 dark:bg-white/10 rounded-full h-2.5">
+                                        <div id="barCNN" class="bg-gray-500 h-2.5 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Init dates for Search inputs to recent times
+        const now = new Date();
+        const fifteenMinsAgo = new Date(now.getTime() - 15 * 60 * 1000);
+        const oneMinAgo = new Date(now.getTime() - 1 * 60 * 1000);
+        
+        // Format for datetime-local: YYYY-MM-DDTHH:mm
+        const toLocalISO = (date) => {
+             const offset = date.getTimezoneOffset() * 60000;
+             const local = new Date(date.getTime() - offset);
+             return local.toISOString().slice(0, 16);
+        };
+        
+        document.getElementById('searchFrom').value = toLocalISO(fifteenMinsAgo);
+        document.getElementById('searchTo').value = toLocalISO(oneMinAgo);
+
+        const apiKey = 'r7kaQpfNDVZdaVp23F1r';
+        const map = new maplibregl.Map({
+            container: 'map', // container id
+            style: `https://api.maptiler.com/maps/darkmatter/style.json?key=${apiKey}`, // style URL
+            center: [34.8516, 31.0461], // Israel center roughly
+            zoom: 6
+        });
+        
+        map.on('load', () => {
+            console.log("Map loaded");
+
+            map.addSource('route', {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: []
+                    }
+                }
+            });
+
+            map.addLayer({
+                id: 'route-line',
+                type: 'line',
+                source: 'route',
+                paint: {
+                    'line-color': '#3b82f6',
+                    'line-width': 4
+                }
+            });
+        });
+
+        function switchTab(tab) {
+            const analyzePage = document.getElementById('analyzePage');
+            const searchPage = document.getElementById('searchPage');
+            const tabAnalyze = document.getElementById('tabAnalyze');
+            const tabSearch = document.getElementById('tabSearch');
+
+            if (tab === 'analyze') {
+                analyzePage.classList.remove('hidden');
+                searchPage.classList.add('hidden');
+                
+                tabAnalyze.classList.add('border-primary', 'text-primary');
+                tabAnalyze.classList.remove('border-transparent', 'text-gray-500');
+                
+                tabSearch.classList.remove('border-primary', 'text-primary');
+                tabSearch.classList.add('border-transparent', 'text-gray-500');
+            } else {
+                analyzePage.classList.add('hidden');
+                searchPage.classList.remove('hidden');
+                
+                tabSearch.classList.add('border-primary', 'text-primary');
+                tabSearch.classList.remove('border-transparent', 'text-gray-500');
+                
+                tabAnalyze.classList.remove('border-primary', 'text-primary');
+                tabAnalyze.classList.add('border-transparent', 'text-gray-500');
+            }
+        }
+
+        async function analyzeFlight() {
+            const flightId = document.getElementById('flightIdInput').value;
+            if (!flightId) { alert("Please enter a flight ID"); return; }
+            
+            performAnalysis(`http://localhost:8000/api/analyze/${flightId}`, flightId);
+        }
+
+        async function searchFlight() {
+            const callsign = document.getElementById('searchCallsign').value;
+            const fromDate = document.getElementById('searchFrom').value;
+            const toDate = document.getElementById('searchTo').value;
+
+            if (!callsign || !fromDate || !toDate) {
+                alert("Please fill in all search fields");
+                return;
+            }
+
+            // Convert to ISO with Timezone Z (UTC)
+            // datetime-local gives "2023-10-27T10:00"
+            // We append ":00Z" assuming user meant UTC or we handle offset. 
+            // Actually, better to send as ISO with offset or just Z if we assume UTC.
+            // For simplicity, let's append ":00Z" treating local input as UTC, 
+            // OR construct proper Date object and get ISO.
+            
+            const fromDt = new Date(fromDate).toISOString();
+            const toDt = new Date(toDate).toISOString();
+
+            document.getElementById('resultFlightId').innerText = callsign;
+            setLoadingState();
+
+            try {
+                const response = await fetch('http://localhost:8000/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        callsign: callsign,
+                        from_date: fromDt,
+                        to_date: toDt
+                    })
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Search failed");
+                }
+
+                const data = await response.json();
+                console.log("Search Result:", data);
+                
+                // If search returns multiple, we assume the backend picked one and returned analysis.
+                // The backend returns the same structure as analyze_flight.
+                
+                if (data.summary && data.summary.flight_id) {
+                    document.getElementById('resultFlightId').innerText = data.summary.flight_id + ` (${callsign})`;
+                }
+                
+                updateUI(data);
+                
+                if (data.summary && data.summary.flight_path) {
+                    updateMap(data.summary.flight_path);
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Search/Analysis failed: " + error.message);
+                document.getElementById('overallStatus').innerHTML = '<span class="material-symbols-outlined text-base">error</span> Error';
+            }
+        }
+
+        function setLoadingState() {
+            document.getElementById('overallStatus').innerHTML = '<span class="material-symbols-outlined text-base animate-spin">sync</span> Processing...';
+            document.querySelectorAll('[id^="card"]').forEach(el => el.style.opacity = '0.5');
+        }
+
+        async function performAnalysis(url, displayId) {
+            document.getElementById('resultFlightId').innerText = displayId;
+            setLoadingState();
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Analysis failed");
+                }
+                const data = await response.json();
+                
+                console.log("API Result:", data);
+                updateUI(data);
+                
+                // Update Map if path exists
+                if (data.summary && data.summary.flight_path) {
+                    updateMap(data.summary.flight_path);
+                }
+                
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed: " + error.message);
+                document.getElementById('overallStatus').innerHTML = '<span class="material-symbols-outlined text-base">error</span> Error';
+            }
+        }
+
+        function updateMap(path) {
+            if (!map.getSource('route')) return;
+
+            // path is array of [lon, lat]
+            const geojson = {
+                'type': 'Feature',
+                'properties': {},
+                'geometry': {
+                    'type': 'LineString',
+                    'coordinates': path
+                }
+            };
+            
+            map.getSource('route').setData(geojson);
+            
+            // Fit bounds
+            if (path.length > 0) {
+                const bounds = new maplibregl.LngLatBounds();
+                path.forEach(coord => bounds.extend(coord));
+                map.fitBounds(bounds, { padding: 50 });
+                
+                // Add markers for start/end
+                document.querySelectorAll('.maplibregl-marker').forEach(m => m.remove());
+                
+                new maplibregl.Marker({color: "#10b981"}) // Green Start
+                    .setLngLat(path[0])
+                    .setPopup(new maplibregl.Popup().setHTML("Start"))
+                    .addTo(map);
+                    
+                new maplibregl.Marker({color: "#ef4444"}) // Red End
+                    .setLngLat(path[path.length - 1])
+                    .setPopup(new maplibregl.Popup().setHTML("End"))
+                    .addTo(map);
+            }
+        }
+
+        function updateUI(data) {
+            document.querySelectorAll('[id^="card"]').forEach(el => el.style.opacity = '1');
+
+            // 1. Summary
+            const isAnomaly = data.summary.is_anomaly;
+            const statusDiv = document.getElementById('overallStatus');
+            if (isAnomaly) {
+                statusDiv.className = "flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 text-red-400";
+                statusDiv.innerHTML = '<span class="material-symbols-outlined text-base">warning</span> ANOMALY DETECTED';
+            } else {
+                statusDiv.className = "flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 text-green-400";
+                statusDiv.innerHTML = '<span class="material-symbols-outlined text-base">check_circle</span> NORMAL FLIGHT';
+            }
+
+            // 2. Rules
+            const r = data.layer_1_rules;
+            setStatus('statusRules', r.status);
+            
+            const rulesContainer = document.getElementById('rulesList');
+            rulesContainer.innerHTML = ''; // Clear loading state
+
+            const addRuleItem = (name, passed, detail) => {
+                const color = passed ? "text-green-500" : "text-red-500";
+                const icon = passed ? "check_circle" : "warning";
+                const bg = passed ? "bg-green-500/10" : "bg-red-500/10";
+                
+                const html = `
+                <div class="flex items-center justify-between p-2 rounded-lg ${bg} border border-gray-200/10">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined ${color} text-base">${icon}</span>
+                        <span class="font-medium text-black dark:text-white">${name}</span>
+                    </div>
+                    <span class="text-xs text-gray-500">${detail || ''}</span>
+                </div>`;
+                rulesContainer.innerHTML += html;
+            };
+
+            const triggers = r.triggers || [];
+            const altFail = triggers.some(t => t.includes("Negative Altitude"));
+            const speedFail = triggers.some(t => t.includes("High Speed"));
+
+            addRuleItem("Minimum Altitude Check", !altFail, altFail ? "Detected < -100ft" : "Passed (> -100ft)");
+            addRuleItem("Max Speed Check", !speedFail, speedFail ? "Detected > 700kts" : "Passed (< 700kts)");
+            
+            const otherTriggers = triggers.filter(t => !t.includes("Altitude") && !t.includes("Speed"));
+            otherTriggers.forEach(t => addRuleItem("Generic Rule", false, t));
+
+            // 3. XGBoost
+            const x = data.layer_2_xgboost;
+            if (x) {
+                setStatus('statusXGB', x.status);
+                document.getElementById('valXGBScore').innerText = (x.score !== undefined) ? x.score.toFixed(4) : "-";
+                setBar('barXGB', (x.score || 0) * 100, x.is_anomaly);
+            }
+
+            // 4. Deep Dense
+            const d = data.layer_3_deep_dense;
+            if (d) {
+                setStatus('statusDense', d.status);
+                document.getElementById('valDenseSev').innerText = (d.severity !== undefined) ? d.severity.toFixed(2) + "x" : "-";
+                let pct = Math.min((d.severity || 0) * 10, 100); 
+                setBar('barDense', pct, d.is_anomaly);
+            }
+
+            // 5. Deep CNN
+            const c = data.layer_4_deep_cnn;
+            if (c) {
+                setStatus('statusCNN', c.status);
+                document.getElementById('valCNNSev').innerText = (c.severity !== undefined) ? c.severity.toFixed(2) + "x" : "-";
+                let pct = Math.min((c.severity || 0) * 10, 100);
+                setBar('barCNN', pct, c.is_anomaly);
+            }
+        }
+
+        function setStatus(id, status) {
+            const el = document.getElementById(id);
+            el.innerText = status;
+            if (status === 'ANOMALY') {
+                el.className = "text-sm font-semibold px-3 py-1 rounded-full bg-red-500/10 text-red-400";
+            } else {
+                el.className = "text-sm font-semibold px-3 py-1 rounded-full bg-green-500/10 text-green-400";
+            }
+        }
+
+        function setBar(id, pct, isRed) {
+            const el = document.getElementById(id);
+            el.style.width = `${pct}%`;
+            el.className = isRed ? "bg-red-500 h-2.5 rounded-full" : "bg-green-500 h-2.5 rounded-full";
+        }
+    </script>
+</body>
+</html>

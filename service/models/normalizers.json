@@ -1,0 +1,18 @@
+{
+  "alt": 39000.0,
+  "gspeed": 512.0,
+  "vspeed": 3264.0,
+  "distance_step_m": 8458.81450864151,
+  "climb_rate": 58.333333333333336,
+  "speed_accel": 7.666666666666667,
+  "vert_accel": 176.0,
+  "turn_rate": 7.62100000000064,
+  "vspeed_abs": 3264.0,
+  "cum_turn_300": 242.0,
+  "cum_alt_60": 3500.0,
+  "avg_speed_300": 509.6651428571431,
+  "phase_ground": 1.0,
+  "phase_climb": 1.0,
+  "phase_descent": 1.0,
+  "phase_cruise": 1.0
+}
