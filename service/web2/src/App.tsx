@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MapComponent } from './components/MapComponent';
 import { ChatInterface } from './components/ChatInterface';
 import { ReportPanel } from './components/ReportPanel';
 import { fetchLiveTrack } from './api';
-import type { AnomalyReport } from './types';
+import type { AnomalyReport, FlightTrack } from './types';
 import { Settings, Bell } from 'lucide-react';
 import clsx from 'clsx';
+import { ALERT_AUDIO_SRC } from './constants';
 
 function App() {
   const [selectedAnomaly, setSelectedAnomaly] = useState<AnomalyReport | null>(null);
-  const [flightPath, setFlightPath] = useState<[number, number][]>([]);
-  const [loadingTrack, setLoadingTrack] = useState(false);
+  const [flightData, setFlightData] = useState<FlightTrack | null>(null);
+  const [, setLoadingTrack] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const bellAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (selectedAnomaly) {
@@ -20,25 +22,97 @@ function App() {
         setShowReport(true); // Open report when anomaly selected
         fetchLiveTrack(selectedAnomaly.flight_id)
             .then(track => {
-                const path: [number, number][] = track.points.map(p => [p.lon, p.lat]);
-                setFlightPath(path);
+                setFlightData(track);
             })
             .catch(err => {
                 console.error("Failed to load track", err);
-                setFlightPath([]);
+                setFlightData(null);
             })
             .finally(() => setLoadingTrack(false));
     } else {
-        setFlightPath([]);
+        setFlightData(null);
         setShowReport(false);
     }
   }, [selectedAnomaly]);
 
+  useEffect(() => {
+    const audio = new Audio(ALERT_AUDIO_SRC);
+    audio.preload = 'auto';
+    bellAudioRef.current = audio;
+
+    return () => {
+        audio.pause();
+        bellAudioRef.current = null;
+    };
+  }, []);
+
+  const handleBellClick = () => {
+    const audio = bellAudioRef.current;
+    if (!audio) return;
+
+    try {
+        audio.pause();
+        audio.currentTime = 0;
+        void audio.play();
+    } catch (error) {
+        console.warn('Unable to play bell sound', error);
+    }
+  };
+
     const handleCloseReport = () => {
         setShowReport(false);
         setSelectedAnomaly(null); // Deselect
-        // Could also refresh list here if needed via context or prop
     };
+
+    // Extract anomaly timestamps for visualization
+    const anomalyTimestamps = useMemo(() => {
+        if (!selectedAnomaly || !selectedAnomaly.full_report || !flightData) return [];
+
+        const timestamps = new Set<number>();
+        const report = selectedAnomaly.full_report;
+        const points = flightData.points;
+
+        // Check Layer 1: Rule Engine
+        const layer1 = report.layer_1_rules;
+        if (layer1?.report?.matched_rules) {
+            layer1.report.matched_rules.forEach((rule: any) => {
+                // 1. Events Array
+                if (rule.details?.events && Array.isArray(rule.details.events)) {
+                    rule.details.events.forEach((event: any) => {
+                        if (event.timestamp) timestamps.add(event.timestamp);
+                        
+                        // Ranges (e.g. holding pattern)
+                        if (event.start_ts && event.end_ts) {
+                            points.forEach(p => {
+                                if (p.timestamp >= event.start_ts && p.timestamp <= event.end_ts) {
+                                    timestamps.add(p.timestamp);
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // 2. Gaps (Signal Loss)
+                if (rule.details?.gaps && Array.isArray(rule.details.gaps)) {
+                    rule.details.gaps.forEach((gap: any) => {
+                        if (gap.start_ts) timestamps.add(gap.start_ts);
+                        if (gap.end_ts) timestamps.add(gap.end_ts);
+                    });
+                }
+
+                // 3. Special Rule Details (e.g. Return to Field)
+                if (rule.id === 7 && rule.details?.takeoff_ts && rule.details?.landing_ts) {
+                    points.forEach(p => {
+                        if (p.timestamp >= rule.details.takeoff_ts && p.timestamp <= rule.details.landing_ts) {
+                            timestamps.add(p.timestamp);
+                        }
+                    });
+                }
+            });
+        }
+
+        return Array.from(timestamps);
+    }, [selectedAnomaly, flightData]);
 
     return (
     <div className="flex h-screen w-full flex-col bg-background-light dark:bg-background-dark text-white overflow-hidden">
@@ -57,7 +131,10 @@ function App() {
             <button className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2C2F33] text-white/80 hover:text-white transition-colors">
                 <Settings className="h-5 w-5" />
             </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2C2F33] text-white/80 hover:text-white transition-colors">
+            <button 
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2C2F33] text-white/80 hover:text-white transition-colors"
+                onClick={handleBellClick}
+            >
                 <Bell className="h-5 w-5" />
             </button>
             <div className="ml-2 size-10 rounded-full bg-gray-600" />
@@ -77,31 +154,30 @@ function App() {
             "bg-[#2C2F33] rounded-xl relative overflow-hidden border border-white/5 transition-all duration-300",
             showReport ? "col-span-6" : "col-span-9"
         )}>
-            <MapComponent path={flightPath} />
+            <MapComponent 
+                points={flightData?.points || []} 
+                anomalyTimestamps={anomalyTimestamps}
+            />
             
             {/* Legend Overlay */}
             <div className="absolute bottom-4 right-4 bg-background-dark/80 backdrop-blur-sm p-3 rounded-lg border border-white/10 text-white z-10">
-                <p className="text-sm font-bold mb-2">Legend (Confidence Score)</p>
+                <p className="text-sm font-bold mb-2">Legend</p>
                 <div className="flex flex-col gap-2 text-xs">
                     <div className="flex items-center gap-2">
                         <span className="h-2.5 w-2.5 rounded-full bg-red-500"></span>
-                        <span>Critical (&gt;85%)</span>
+                        <span>Anomaly Event</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-purple-500"></span>
-                        <span>High (&gt;70%)</span>
+                        <span className="h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+                        <span>Normal Flight Path</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-yellow-500"></span>
-                        <span>Medium (&gt;20%)</span>
+                        <span className="h-2.5 w-2.5 rounded-full bg-green-500"></span>
+                        <span>Start</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-pink-500"></span>
-                        <span>Low (0-20%)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <hr className="w-3 border-t-2 border-blue-500"/>
-                        <span>Flight Path</span>
+                     <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                        <span>End</span>
                     </div>
                 </div>
             </div>
@@ -121,6 +197,7 @@ function App() {
       <ChatInterface 
         data={selectedAnomaly?.full_report} 
         flightId={selectedAnomaly?.flight_id || "No Flight Selected"} 
+        flightPoints={flightData?.points || []}
       />
     </div>
   )

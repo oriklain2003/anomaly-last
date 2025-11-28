@@ -21,6 +21,63 @@ const LayerCard: React.FC<{ title: string; data: any; type: 'rules' | 'model' }>
         ? "bg-red-500/10 border-red-500/30" 
         : "bg-white/5 border-white/10";
 
+    // Special handling for "Dangerous Proximity" (ID 4)
+    const renderProximityEvents = (rule: any) => {
+        if (!rule.details?.events?.length) return null;
+        return (
+            <div className="mt-2 space-y-2">
+                <p className="text-xs font-bold text-red-300">Conflict Details:</p>
+                {rule.details.events.map((ev: any, idx: number) => (
+                    <div key={idx} className="bg-red-500/10 p-2 rounded border border-red-500/20 text-[10px] text-red-200">
+                        <div className="flex justify-between">
+                            <span>Other Flight: <span className="font-bold font-mono">{ev.other_flight}</span></span>
+                            <span className="font-mono text-white/60">
+                                {new Date(ev.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </span>
+                        </div>
+                        <div className="flex justify-between mt-1 text-white/40">
+                             <span>Dist: {ev.distance_nm} NM</span>
+                             <span>Alt Diff: {ev.altitude_diff_ft} ft</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
+    // Special handling for "Path Deviation" (ID 11)
+    const renderPathDeviation = (rule: any) => {
+        if (!rule.details?.segments) return null;
+        return (
+            <div className="mt-2 space-y-2">
+                <p className="text-xs font-bold text-white/60">Segment Analysis:</p>
+                {Object.entries(rule.details.segments).map(([phase, data]: [string, any]) => (
+                    <div key={phase} className="bg-white/5 p-2 rounded border border-white/10 text-[10px] text-white/60">
+                        <div className="flex justify-between mb-1">
+                            <span className="font-bold uppercase text-white/40">{phase}</span>
+                            <span className={data.match_found ? "text-green-400" : "text-red-400"}>
+                                {data.match_found ? "MATCH" : "NO MATCH"}
+                            </span>
+                        </div>
+                        {data.match_found ? (
+                            <div className="flex flex-col gap-0.5">
+                                <span>Flow: {data.flow_id} ({data.layer})</span>
+                                <span>Dist: {data.dist_nm} NM</span>
+                            </div>
+                        ) : (
+                            <span className="italic">No matching path</span>
+                        )}
+                        {data.closest_loose_dist_nm !== undefined && (
+                             <div className="mt-1 pt-1 border-t border-white/10 text-blue-300">
+                                 Loose Dist: {data.closest_loose_dist_nm} NM
+                             </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <div className={clsx("rounded-lg p-3 border transition-all", cardStyle)}>
             <div className="flex items-center justify-between mb-2">
@@ -40,6 +97,13 @@ const LayerCard: React.FC<{ title: string; data: any; type: 'rules' | 'model' }>
                                         <li key={i}>{t}</li>
                                     ))}
                                 </ul>
+                                
+                                {/* Show details for specific rules if present */}
+                                {data.report?.matched_rules?.map((rule: any) => {
+                                    if (rule.id === 4) return <div key={rule.id}>{renderProximityEvents(rule)}</div>;
+                                    if (rule.id === 11) return <div key={rule.id}>{renderPathDeviation(rule)}</div>;
+                                    return null;
+                                })}
                             </div>
                         )}
                     </>

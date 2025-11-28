@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Search, Radio, Filter } from 'lucide-react';
 import { fetchLiveAnomalies } from '../api';
 import type { AnomalyReport } from '../types';
 import clsx from 'clsx';
+import { ALERT_AUDIO_SRC, SOUND_COOLDOWN_MS } from '../constants';
 
 interface SidebarProps {
     onSelectAnomaly: (anomaly: AnomalyReport) => void;
@@ -18,7 +19,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
     
     // Filters
     const [minScore, setMinScore] = useState(0);
+    const [selectedTrigger, setSelectedTrigger] = useState('All');
     const [showFilters, setShowFilters] = useState(false);
+
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const lastSoundTimeRef = useRef(0);
+
+    const triggerOptions = ['All', 'Rules', 'XGBoost', 'DeepDense', 'DeepCNN', 'Transformer'];
 
     // Realtime tracking
     const lastFetchTimeRef = useRef<number>(0);
@@ -63,6 +70,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
         }
     };
 
+    useEffect(() => {
+        const audio = new Audio(ALERT_AUDIO_SRC);
+        audio.preload = 'auto';
+        audioRef.current = audio;
+
+        return () => {
+            audio.pause();
+            audioRef.current = null;
+        };
+    }, []);
+
+    const triggerRealtimeAlert = () => {
+        const now = Date.now();
+        if (now - lastSoundTimeRef.current < SOUND_COOLDOWN_MS) {
+            return;
+        }
+
+        lastSoundTimeRef.current = now;
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        try {
+            audio.pause();
+            audio.currentTime = 0;
+            void audio.play();
+        } catch (error) {
+            console.warn('Unable to play alert sound', error);
+        }
+    };
+
     const fetchRealtimeInitial = async () => {
         setLoading(true);
         setAnomalies([]);
@@ -90,11 +127,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
             const newData = await fetchLiveAnomalies(start, now);
             
             if (newData.length > 0) {
+                let shouldPlayAlert = false;
                 setAnomalies(prev => {
                     const existingIds = new Set(prev.map(a => `${a.flight_id}-${a.timestamp}`));
                     const uniqueNew = newData.filter(a => !existingIds.has(`${a.flight_id}-${a.timestamp}`));
+                    if (uniqueNew.length > 0) {
+                        shouldPlayAlert = true;
+                    }
                     return [...uniqueNew, ...prev].sort((a, b) => b.timestamp - a.timestamp);
                 });
+
+                if (shouldPlayAlert) {
+                    triggerRealtimeAlert();
+                }
             }
             lastFetchTimeRef.current = now;
         } catch (error) {
@@ -113,9 +158,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
             (a.callsign || '').toLowerCase().includes(filter.toLowerCase()) ||
             (a.full_report?.summary?.triggers?.join(' ') || '').toLowerCase().includes(filter.toLowerCase());
         
+        const triggers = a.full_report?.summary?.triggers || [];
+        const matchesTrigger = selectedTrigger === 'All' || triggers.includes(selectedTrigger);
+
         const matchesScore = score >= minScore;
         
-        return matchesSearch && matchesScore;
+        return matchesSearch && matchesScore && matchesTrigger;
     });
 
     const changeDate = (days: number) => {
@@ -212,20 +260,44 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
 
                 {/* Advanced Filters */}
                 {showFilters && (
-                    <div className="bg-background-dark rounded-lg p-3 animate-in slide-in-from-top-2">
-                        <p className="text-xs text-white/60 font-bold uppercase mb-2">Minimum Confidence Score: {minScore}%</p>
-                        <input 
-                            type="range" 
-                            min="0" 
-                            max="100" 
-                            value={minScore} 
-                            onChange={(e) => setMinScore(Number(e.target.value))}
-                            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
-                        />
-                        <div className="flex justify-between text-[10px] text-white/40 mt-1">
-                            <span>0%</span>
-                            <span>{getScoreLabel(minScore)}</span>
-                            <span>100%</span>
+                    <div className="bg-background-dark rounded-lg p-3 animate-in slide-in-from-top-2 space-y-4">
+                        {/* Confidence Score Filter */}
+                        <div>
+                            <p className="text-xs text-white/60 font-bold uppercase mb-2">Minimum Confidence Score: {minScore}%</p>
+                            <input 
+                                type="range" 
+                                min="0" 
+                                max="100" 
+                                value={minScore} 
+                                onChange={(e) => setMinScore(Number(e.target.value))}
+                                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                            />
+                            <div className="flex justify-between text-[10px] text-white/40 mt-1">
+                                <span>0%</span>
+                                <span>{getScoreLabel(minScore)}</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+
+                        {/* Trigger Reason Filter */}
+                        <div>
+                            <p className="text-xs text-white/60 font-bold uppercase mb-2">Filter by Layer</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {triggerOptions.map((option) => (
+                                    <button
+                                        key={option}
+                                        onClick={() => setSelectedTrigger(option)}
+                                        className={clsx(
+                                            "px-2 py-1.5 rounded-md text-xs font-medium transition-colors",
+                                            selectedTrigger === option
+                                                ? "bg-primary text-background-dark"
+                                                : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                                        )}
+                                    >
+                                        {option}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )}

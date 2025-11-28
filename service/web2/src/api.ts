@@ -18,6 +18,14 @@ export const fetchLiveTrack = async (flightId: string): Promise<FlightTrack> => 
     return response.json();
 };
 
+export const fetchLearnedPaths = async (): Promise<any> => {
+    const response = await fetch(`${API_BASE}/paths`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch learned paths');
+    }
+    return response.json();
+};
+
 export const submitFeedback = async (flightId: string, isAnomaly: boolean, comments: string = ""): Promise<void> => {
     const response = await fetch(`${API_BASE}/feedback`, {
         method: 'POST',
