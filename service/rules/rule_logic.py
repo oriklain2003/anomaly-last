@@ -451,6 +451,19 @@ def _rule_abrupt_turn(ctx: RuleContext) -> RuleResult:
             if abs(dh) / dt > TURN_RATE_MAX:
                 continue
 
+            # TRACK vs BEARING Check (Detect Sensor Failure / Crabbing Glitch)
+            # If the reported heading (track) is wildly different from the actual path (bearing),
+            # the sensor data is likely invalid.
+            # We only check this if moving at reasonable speed (not hovering) and sufficient distance.
+            if (p1.gspeed or 0) > 50 and dt > 2:
+                bearing = initial_bearing_deg(p0.lat, p0.lon, p1.lat, p1.lon)
+                # Calculate difference between reported track and actual bearing
+                diff_track_bearing = abs(((p1.track - bearing + 540) % 360) - 180)
+                
+                # If difference is > 90 degrees, the heading is likely garbage (e.g. sensor stuck or flipped)
+                if diff_track_bearing > 90:
+                    continue
+
             # Update previous valid index
             prev_idx = end_idx
 
