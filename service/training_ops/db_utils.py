@@ -12,6 +12,38 @@ FEEDBACK_DB_PATH = ROOT_DIR / "training_ops/feedback.db"
 
 logger = logging.getLogger(__name__)
 
+TRACK_TABLE_COLUMNS = [
+    ("flight_id", "TEXT"),
+    ("timestamp", "INTEGER"),
+    ("lat", "REAL"),
+    ("lon", "REAL"),
+    ("alt", "REAL"),
+    ("heading", "REAL"),
+    ("gspeed", "REAL"),
+    ("vspeed", "REAL"),
+    ("track", "REAL"),
+    ("squawk", "TEXT"),
+    ("callsign", "TEXT"),
+    ("source", "TEXT"),
+]
+
+def ensure_table_columns(cursor: sqlite3.Cursor, table_name: str) -> None:
+    """
+    Make sure legacy databases contain the full schema.
+    SQLite's ALTER TABLE ADD COLUMN is idempotent for new columns, so it's safe.
+    """
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    existing_columns = {row[1] for row in cursor.fetchall()}
+
+    for column_name, column_type in TRACK_TABLE_COLUMNS:
+        if column_name not in existing_columns:
+            cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
+            logger.warning(
+                "Backfilled missing column '%s' on table '%s'",
+                column_name,
+                table_name,
+            )
+
 def init_dbs():
     """Initialize the feedback and training databases."""
     TRAINING_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -75,6 +107,11 @@ def init_dbs():
     
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_ft_fid ON flight_tracks (flight_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_at_fid ON anomalous_tracks (flight_id)")
+
+    # Ensure legacy DBs pick up the full schema (e.g., heading column)
+    ensure_table_columns(cursor, "flight_tracks")
+    ensure_table_columns(cursor, "anomalous_tracks")
+
     conn.commit()
     conn.close()
 

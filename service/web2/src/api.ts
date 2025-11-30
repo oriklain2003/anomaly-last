@@ -1,6 +1,6 @@
 import { AnomalyReport, FlightTrack } from './types';
 
-const API_BASE = 'http://localhost:8000/api'; // Assuming dev setup
+const API_BASE = (import.meta.env.VITE_API_URL || '') + '/api';
 
 export const fetchLiveAnomalies = async (startTs: number, endTs: number): Promise<AnomalyReport[]> => {
     const response = await fetch(`${API_BASE}/live/anomalies?start_ts=${startTs}&end_ts=${endTs}`);
@@ -14,6 +14,22 @@ export const fetchLiveTrack = async (flightId: string): Promise<FlightTrack> => 
     const response = await fetch(`${API_BASE}/live/track/${flightId}`);
     if (!response.ok) {
         throw new Error('Failed to fetch track');
+    }
+    return response.json();
+};
+
+export const fetchResearchAnomalies = async (startTs: number, endTs: number): Promise<AnomalyReport[]> => {
+    const response = await fetch(`${API_BASE}/research/anomalies?start_ts=${startTs}&end_ts=${endTs}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch research anomalies');
+    }
+    return response.json();
+};
+
+export const fetchResearchTrack = async (flightId: string): Promise<FlightTrack> => {
+    const response = await fetch(`${API_BASE}/research/track/${flightId}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch research track');
     }
     return response.json();
 };

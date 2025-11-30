@@ -25,9 +25,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+import argparse
+
 # Default configuration values
 # Check if files exist in current directory (running from root) or parent (running from rules)
-DB_PATH = Path("last.db") if Path("last.db").exists() else Path("../last.db")
+DEFAULT_DB_PATH = Path("last.db") if Path("last.db").exists() else Path("../last.db")
 RULES_PATH = Path("anomaly_rule.json") if Path("anomaly_rule.json").exists() else Path("../anomaly_rule.json")
 METADATA_PATH = None  # Optional
 FILTERED_IDS_FILE = Path("filtered_flight_ids.json")
@@ -46,7 +48,14 @@ def load_metadata(path: Path | None) -> FlightMetadata | None:
 
 
 def main() -> None:
-    repository = FlightRepository(DbConfig(path=DB_PATH))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--db", type=Path, default=None, help="Path to SQLite DB")
+    args = parser.parse_args()
+    
+    db_path = args.db if args.db else DEFAULT_DB_PATH
+    logger.info(f"Using database: {db_path}")
+
+    repository = FlightRepository(DbConfig(path=db_path))
     engine = AnomalyRuleEngine(repository, RULES_PATH)
     metadata = load_metadata(METADATA_PATH)
     

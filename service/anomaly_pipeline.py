@@ -16,7 +16,12 @@ from ml_deep.detector import DeepAnomalyDetector
 # 4. Deep CNN
 from ml_deep_cnn.detector import DeepCNNDetector
 # 5. Transformer
+# 5. Transformer
 from ml_transformer.detector import TransformerAnomalyDetector
+# 6. Hybrid
+from ml_hybrid.detector import HybridAnomalyDetector
+
+from core.config import TRAIN_NORTH, TRAIN_SOUTH, TRAIN_EAST, TRAIN_WEST
 
 class AnomalyPipeline:
     def __init__(self):
@@ -89,15 +94,30 @@ class AnomalyPipeline:
             print("  [-] Transformer Detector NOT Found")
             self.trans_detector = None
 
+        # --- 6. Hybrid ---
+        self.hybrid_dir = Path("ml_hybrid/output")
+        # Check if model exists, otherwise skip
+        if (self.hybrid_dir / "hybrid_model.pth").exists():
+            try:
+                self.hybrid_detector = HybridAnomalyDetector(self.hybrid_dir)
+                print("  [+] Hybrid Detector Loaded")
+            except Exception as e:
+                print(f"  [-] Hybrid Detector Error: {e}")
+                self.hybrid_detector = None
+        else:
+            print("  [-] Hybrid Detector NOT Found")
+            self.hybrid_detector = None
+
     def _calculate_confidence(self, results):
         weights = {
-            "rules": 5.0,    # Rule hit = 100%
+            "rules": 6.0,    # Rule hit = 100%
             "xgboost": 2.5,  # XGB hit = 50%
             "trans": 2.5,    # Trans hit = 50%
             "cnn": 1.0,      # CNN hit = 20%
-            "dense": 1.0     # Dense hit = 20%
+            "dense": 1.0,    # Dense hit = 20%
+            "hybrid": 3.0    # Hybrid hit = 60% (Strong signal)
         }
-        normalization_factor = 5.0 
+        normalization_factor = 6.0 
         
         score = 0.0
         
@@ -120,12 +140,16 @@ class AnomalyPipeline:
         # Transformer
         if results.get("layer_5_transformer", {}).get("is_anomaly"):
             score += weights["trans"]
+
+        # Hybrid
+        if results.get("layer_6_hybrid", {}).get("is_anomaly"):
+            score += weights["hybrid"]
             
         # Calculate percentage, capped at 1.0
         probability = min(1.0, score / normalization_factor)
         return round(probability * 100, 2) # Return percent
 
-    def analyze(self, flight, active_flights_context: Dict[str, Any] = None) -> Dict[str, Any]:
+    def analyze(self, flight, active_flights_context: Dict[str, Any] = None, repository=None) -> Dict[str, Any]:
         """
         Run all layers on the flight and return a unified report.
         Filters points to strictly match the training bounding box.
@@ -133,13 +157,10 @@ class AnomalyPipeline:
         Args:
             flight: The FlightTrack object to analyze.
             active_flights_context: Optional dictionary of other active FlightTrack objects for proximity checks.
+            repository: Optional FlightRepository (or InMemoryRepository) for rule engine.
         """
         # --- 0. Filter Data to Training Region ---
-        # Train Box: 28.53 - 34.59 N, 32.29 - 37.39 E
-        TRAIN_NORTH = 34.597042
-        TRAIN_SOUTH = 28.536275
-        TRAIN_WEST  = 32.299805
-        TRAIN_EAST  = 37.397461
+        # Uses bounding box from core.config
         
         filtered_points = []
         for p in flight.sorted_points():
@@ -173,20 +194,17 @@ class AnomalyPipeline:
         # --- Layer 1: Rule Engine ---
         if self.rule_engine:
             try:
-                # If we have context, we should use it to mock a repository for proximity checks
-                # This is a bit of a hack: we swap the repository in the engine temporarily
-                # or we pass the context to a specialized method.
-                # The current RuleLogic uses ctx.repository.fetch_points_between.
-                # We need to implement an "InMemoryRepository" adapter if we want real proximity checks without DB.
-                
-                # For now, we just run the track against the rules. Proximity will only work if
-                # self.rule_engine was initialized with a real DB that has the other flights.
-                # Since RealtimeMonitor does NOT write to the DB until AFTER analysis, 
-                # pure DB-based proximity check will fail to see "current" neighbors.
-                
-                # FUTURE TODO: Implement InMemoryRepository(active_flights_context)
+                # Use the passed repository if available (e.g., InMemoryRepository for live context)
+                # We temporarily swap the repository in the engine
+                original_repo = self.rule_engine.repository
+                if repository:
+                    self.rule_engine.repository = repository
                 
                 rule_report = self.rule_engine.evaluate_track(flight_active)
+                
+                # Restore original repo
+                if repository:
+                    self.rule_engine.repository = original_repo
                 
                 # Parse results for summary
                 matched_rules = rule_report.get("matched_rules", [])
@@ -275,14 +293,28 @@ class AnomalyPipeline:
             except Exception as e:
                     results["layer_5_transformer"] = {"error": str(e)}
 
+        # --- Layer 6: Hybrid CNN-Transformer ---
+        if hasattr(self, 'hybrid_detector') and self.hybrid_detector:
+            try:
+                res = self.hybrid_detector.predict(flight_active)
+                if "error" not in res:
+                    results["layer_6_hybrid"] = res
+                    if res["is_anomaly"]:
+                        is_anomaly_any = True
+                        summary_triggers.append("Hybrid")
+                else:
+                    results["layer_6_hybrid"] = {"error": res["error"]}
+            except Exception as e:
+                results["layer_6_hybrid"] = {"error": str(e)}
+
         # --- Summary ---
         # Extract simplified path for UI (lon, lat)
-        # We return the FULL path so the UI shows the complete flight
-        flight_path = [[p.lon, p.lat] for p in flight.sorted_points()]
+        # We return the FILTERED path so the UI shows exactly what was analyzed
+        flight_path = [[p.lon, p.lat] for p in flight_active.sorted_points()]
         
         # Attempt to find a callsign from the points
         callsign = None
-        for p in flight.points:
+        for p in flight_active.points:
             if p.callsign and p.callsign.strip():
                 callsign = p.callsign
                 break
@@ -290,8 +322,15 @@ class AnomalyPipeline:
         # Calculate Confidence Score
         confidence_score = self._calculate_confidence(results)
         
+        # Final Verdict Logic:
+        # To reduce false alarms, we use the confidence score as a gatekeeper.
+        # Score calculation (weights): Rules=5.0, Trans=2.5, XGB=2.5, CNN=1.0, Dense=1.0, Hybrid=3.0
+        # Max Score = 15.0. Normalization Factor = 6.0.
+        
+        final_is_anomaly = confidence_score >= 40.0
+        
         results["summary"] = {
-            "is_anomaly": is_anomaly_any,
+            "is_anomaly": final_is_anomaly,
             "confidence_score": confidence_score,
             "triggers": summary_triggers,
             "flight_id": flight.flight_id,

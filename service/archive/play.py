@@ -27,10 +27,10 @@ export_query_to_csv(
     query="""
         SELECT *
         FROM flight_tracks
-        WHERE flight_id = '3aeb8b95'
+        WHERE flight_id = '3d3e0536'
         ORDER BY timestamp ASC
     """,
-    output_csv="eee.csv"
+    output_csv="e.csv"
 )
 
 import sqlite3

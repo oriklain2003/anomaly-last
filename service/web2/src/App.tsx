@@ -3,13 +3,14 @@ import { Sidebar } from './components/Sidebar';
 import { MapComponent } from './components/MapComponent';
 import { ChatInterface } from './components/ChatInterface';
 import { ReportPanel } from './components/ReportPanel';
-import { fetchLiveTrack } from './api';
+import { fetchLiveTrack, fetchResearchTrack } from './api';
 import type { AnomalyReport, FlightTrack } from './types';
 import { Settings, Bell } from 'lucide-react';
 import clsx from 'clsx';
 import { ALERT_AUDIO_SRC } from './constants';
 
 function App() {
+  const [mode, setMode] = useState<'historical' | 'realtime' | 'research'>('historical');
   const [selectedAnomaly, setSelectedAnomaly] = useState<AnomalyReport | null>(null);
   const [flightData, setFlightData] = useState<FlightTrack | null>(null);
   const [, setLoadingTrack] = useState(false);
@@ -20,7 +21,10 @@ function App() {
     if (selectedAnomaly) {
         setLoadingTrack(true);
         setShowReport(true); // Open report when anomaly selected
-        fetchLiveTrack(selectedAnomaly.flight_id)
+        
+        const fetcher = mode === 'research' ? fetchResearchTrack : fetchLiveTrack;
+        
+        fetcher(selectedAnomaly.flight_id)
             .then(track => {
                 setFlightData(track);
             })
@@ -33,7 +37,7 @@ function App() {
         setFlightData(null);
         setShowReport(false);
     }
-  }, [selectedAnomaly]);
+  }, [selectedAnomaly, mode]);
 
   useEffect(() => {
     const audio = new Audio(ALERT_AUDIO_SRC);
@@ -147,6 +151,8 @@ function App() {
         <Sidebar 
             onSelectAnomaly={setSelectedAnomaly} 
             selectedAnomalyId={selectedAnomaly?.flight_id} 
+            mode={mode}
+            setMode={setMode}
         />
 
         {/* Map Area */}

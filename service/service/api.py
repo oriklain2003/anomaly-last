@@ -45,15 +45,22 @@ app.add_middleware(
 )
 
 # Mount Static Files (The Web UI)
-static_path = Path("web")
+# Prefer the built 'dist' directory for production
+static_path = Path("web/dist")
 if not static_path.exists():
-    static_path.mkdir()
-app.mount("/ui", StaticFiles(directory="web"), name="ui")
+    # Fallback to 'web' if dist doesn't exist (though this might not work for React apps without Vite)
+    static_path = Path("web")
+
+if not static_path.exists():
+    static_path.mkdir(parents=True, exist_ok=True)
+
+app.mount("/ui", StaticFiles(directory=str(static_path), html=True), name="ui")
 
 # Cache DB Configuration
 CACHE_DB_PATH = Path("flight_cache.db")
 DB_ANOMALIES_PATH = Path("realtime/live_anomalies.db")
 DB_TRACKS_PATH = Path("realtime/live_tracks.db")
+DB_RESEARCH_PATH = Path("realtime/research.db")
 
 def setup_cache_db():
     conn = sqlite3.connect(str(CACHE_DB_PATH))
@@ -277,53 +284,195 @@ def get_live_anomalies(start_ts: int, end_ts: int):
         logger.error(f"Failed to fetch live anomalies: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/live/track/{flight_id}")
-def get_live_track(flight_id: str):
+@app.get("/api/research/anomalies")
+def get_research_anomalies(start_ts: int, end_ts: int):
     """
-    Fetch the full track for a flight from the live tracks database.
+    Fetch anomalies from the research database within a time range.
     """
-    if not DB_TRACKS_PATH.exists():
-        raise HTTPException(status_code=404, detail="Live tracks DB not found")
+    if not DB_RESEARCH_PATH.exists():
+        return []
         
     try:
-        conn = sqlite3.connect(str(DB_TRACKS_PATH))
-        conn.row_factory = sqlite3.Row
+        conn = sqlite3.connect(str(DB_RESEARCH_PATH))
         cursor = conn.cursor()
         
         query = """
-            SELECT * FROM flight_tracks 
-            WHERE flight_id = ? 
-            ORDER BY timestamp ASC
+            SELECT flight_id, timestamp, is_anomaly, severity_cnn, severity_dense, full_report 
+            FROM anomaly_reports 
+            WHERE timestamp BETWEEN ? AND ? AND is_anomaly = 1
+            ORDER BY timestamp DESC
         """
         
-        cursor.execute(query, (flight_id,))
+        cursor.execute(query, (start_ts, end_ts))
         rows = cursor.fetchall()
+        
+        # Gather all flight_ids
+        flight_ids = [r[0] for r in rows]
+        
+        # Fetch callsigns from tracks tables (normal or anomalies)
+        callsigns = {}
+        if flight_ids:
+            placeholders = ",".join(["?"] * len(flight_ids))
+            # Try anomalies_tracks
+            try:
+                cursor.execute(f"SELECT flight_id, callsign FROM anomalies_tracks WHERE flight_id IN ({placeholders}) AND callsign IS NOT NULL", flight_ids)
+                for fid, cs in cursor.fetchall():
+                    if cs: callsigns[fid] = cs
+            except: pass
+            
+            # Try normal_tracks (in case it was flagged anomaly later or vice versa)
+            try:
+                cursor.execute(f"SELECT flight_id, callsign FROM normal_tracks WHERE flight_id IN ({placeholders}) AND callsign IS NOT NULL", flight_ids)
+                for fid, cs in cursor.fetchall():
+                    if cs and fid not in callsigns: callsigns[fid] = cs
+            except: pass
+
         conn.close()
         
-        if not rows:
-            raise HTTPException(status_code=404, detail="Track not found")
-            
-        points = []
+        results = []
         for row in rows:
-            points.append({
-                "lat": row["lat"],
-                "lon": row["lon"],
-                "alt": row["alt"],
-                "timestamp": row["timestamp"],
-                "gspeed": row["gspeed"],
-                "track": row["track"],
-                "flight_id": row["flight_id"]
-            })
+            report = row[5]
+            if isinstance(report, str):
+                try:
+                    report = json.loads(report)
+                except:
+                    pass
             
-        return {
-            "flight_id": flight_id,
-            "points": points
-        }
-    except HTTPException:
-        raise
+            flight_id = row[0]
+            callsign = callsigns.get(flight_id)
+            
+            if not callsign and isinstance(report, dict):
+                 callsign = report.get("summary", {}).get("callsign")
+
+            results.append({
+                "flight_id": flight_id,
+                "timestamp": row[1],
+                "is_anomaly": bool(row[2]),
+                "severity_cnn": row[3],
+                "severity_dense": row[4],
+                "full_report": report,
+                "callsign": callsign
+            })
+        
+        return results
     except Exception as e:
-        logger.error(f"Failed to fetch live track: {e}")
+        logger.error(f"Failed to fetch research anomalies: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/research/track/{flight_id}")
+def get_research_track(flight_id: str):
+    """
+    Fetch the full track for a flight from Research DB.
+    Checks both anomalies_tracks and normal_tracks.
+    """
+    if not DB_RESEARCH_PATH.exists():
+         raise HTTPException(status_code=404, detail="Research DB not found")
+         
+    points = []
+    try:
+        conn = sqlite3.connect(str(DB_RESEARCH_PATH))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Try anomalies_tracks
+        try:
+            cursor.execute("SELECT * FROM anomalies_tracks WHERE flight_id = ? ORDER BY timestamp ASC", (flight_id,))
+            rows = cursor.fetchall()
+            if rows:
+                points = [dict(r) for r in rows]
+        except: pass
+        
+        # Try normal_tracks if empty
+        if not points:
+            try:
+                cursor.execute("SELECT * FROM normal_tracks WHERE flight_id = ? ORDER BY timestamp ASC", (flight_id,))
+                rows = cursor.fetchall()
+                if rows:
+                    points = [dict(r) for r in rows]
+            except: pass
+            
+        conn.close()
+    except Exception as e:
+        logger.error(f"Research track fetch error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    if not points:
+        raise HTTPException(status_code=404, detail="Track not found in Research DB")
+            
+    return {
+        "flight_id": flight_id,
+        "points": points
+    }
+
+@app.get("/api/paths")
+def get_learned_paths():
+    path_file = Path("rules/learned_paths.json")
+    if not path_file.exists():
+        return {"layers": {"strict": [], "loose": []}}
+    with path_file.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+@app.get("/api/live/track/{flight_id}")
+def get_live_track(flight_id: str):
+    """
+    Fetch the full track for a flight.
+    1. Try Live Tracks DB
+    2. Fallback to Cache DB
+    """
+    points = []
+    
+    # 1. Try Live DB
+    if DB_TRACKS_PATH.exists():
+        try:
+            conn = sqlite3.connect(str(DB_TRACKS_PATH))
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT * FROM flight_tracks 
+                WHERE flight_id = ? 
+                ORDER BY timestamp ASC
+            """
+            
+            cursor.execute(query, (flight_id,))
+            rows = cursor.fetchall()
+            conn.close()
+            
+            for row in rows:
+                points.append({
+                    "lat": row["lat"],
+                    "lon": row["lon"],
+                    "alt": row["alt"],
+                    "timestamp": row["timestamp"],
+                    "gspeed": row["gspeed"],
+                    "track": row["track"],
+                    "flight_id": row["flight_id"]
+                })
+        except Exception as e:
+            logger.error(f"Failed to fetch from live tracks: {e}")
+
+    # 2. Fallback to Cache
+    if not points:
+        try:
+            conn = sqlite3.connect(str(CACHE_DB_PATH))
+            cursor = conn.cursor()
+            cursor.execute("SELECT data FROM flights WHERE flight_id = ?", (flight_id,))
+            row = cursor.fetchone()
+            conn.close()
+            
+            if row:
+                data = json.loads(row[0])
+                points = data.get("points", [])
+        except Exception as e:
+            logger.error(f"Failed to fetch from cache: {e}")
+
+    if not points:
+        raise HTTPException(status_code=404, detail="Track not found in live or cache DB")
+            
+    return {
+        "flight_id": flight_id,
+        "points": points
+    }
 
 from training_ops.db_utils import save_feedback
 
@@ -385,19 +534,28 @@ def submit_feedback(feedback: dict):
     try:
         save_feedback(flight_id, is_anomaly, points, comments)
         
-        # If user says it's NOT an anomaly, remove it from the live anomalies view (DB)
-        if is_anomaly is False:
+        # 3. Update Realtime DB
+        if DB_ANOMALIES_PATH.exists():
             try:
-                if DB_ANOMALIES_PATH.exists():
-                    conn = sqlite3.connect(str(DB_ANOMALIES_PATH))
-                    cursor = conn.cursor()
+                conn = sqlite3.connect(str(DB_ANOMALIES_PATH))
+                cursor = conn.cursor()
+                
+                # A. Add to ignored_flights so it doesn't get re-analyzed/re-inserted
+                cursor.execute(
+                    "INSERT OR IGNORE INTO ignored_flights (flight_id, timestamp, reason) VALUES (?, ?, ?)",
+                    (flight_id, int(datetime.now().timestamp()), "feedback_given")
+                )
+
+                # B. If user says it's NOT an anomaly, remove it from the live anomalies view (soft delete)
+                if is_anomaly is False:
                     # We set is_anomaly=0 to "soft delete" it from the live view query which filters is_anomaly=1
                     cursor.execute("UPDATE anomaly_reports SET is_anomaly = 0 WHERE flight_id = ?", (flight_id,))
-                    conn.commit()
-                    conn.close()
                     logger.info(f"Removed {flight_id} from live anomalies view (soft delete).")
+                
+                conn.commit()
+                conn.close()
             except Exception as db_e:
-                logger.error(f"Failed to update anomaly status in live DB: {db_e}")
+                logger.error(f"Failed to update realtime DB: {db_e}")
                 
     except Exception as e:
         logger.error(f"Save feedback failed: {e}")

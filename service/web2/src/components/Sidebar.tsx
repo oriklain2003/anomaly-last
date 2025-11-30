@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Search, Radio, Filter } from 'lucide-react';
-import { fetchLiveAnomalies } from '../api';
+import { ChevronLeft, ChevronRight, Search, Radio, Filter, Beaker, Calendar } from 'lucide-react';
+import { fetchLiveAnomalies, fetchResearchAnomalies } from '../api';
 import type { AnomalyReport } from '../types';
 import clsx from 'clsx';
 import { ALERT_AUDIO_SRC, SOUND_COOLDOWN_MS } from '../constants';
@@ -8,10 +8,11 @@ import { ALERT_AUDIO_SRC, SOUND_COOLDOWN_MS } from '../constants';
 interface SidebarProps {
     onSelectAnomaly: (anomaly: AnomalyReport) => void;
     selectedAnomalyId?: string;
+    mode: 'historical' | 'realtime' | 'research';
+    setMode: (mode: 'historical' | 'realtime' | 'research') => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnomalyId }) => {
-    const [mode, setMode] = useState<'historical' | 'realtime'>('historical');
+export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnomalyId, mode, setMode }) => {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [anomalies, setAnomalies] = useState<AnomalyReport[]>([]);
     const [loading, setLoading] = useState(false);
@@ -25,7 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const lastSoundTimeRef = useRef(0);
 
-    const triggerOptions = ['All', 'Rules', 'XGBoost', 'DeepDense', 'DeepCNN', 'Transformer'];
+    const triggerOptions = ['All', 'Rules', 'XGBoost', 'DeepDense', 'DeepCNN', 'Transformer', 'Hybrid'];
 
     // Realtime tracking
     const lastFetchTimeRef = useRef<number>(0);
@@ -38,8 +39,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
             intervalRef.current = null;
         }
 
-        if (mode === 'historical') {
-            fetchHistorical();
+        if (mode === 'historical' || mode === 'research') {
+            fetchHistoricalOrResearch();
         } else {
             fetchRealtimeInitial();
             intervalRef.current = setInterval(fetchRealtimeUpdate, 5000);
@@ -50,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
         };
     }, [mode, selectedDate]);
 
-    const fetchHistorical = async () => {
+    const fetchHistoricalOrResearch = async () => {
         setLoading(true);
         try {
             const start = new Date(selectedDate);
@@ -58,13 +59,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
             const end = new Date(selectedDate);
             end.setHours(23, 59, 59, 999);
 
-            const data = await fetchLiveAnomalies(
+            const apiFunc = mode === 'research' ? fetchResearchAnomalies : fetchLiveAnomalies;
+
+            const data = await apiFunc(
                 Math.floor(start.getTime() / 1000),
                 Math.floor(end.getTime() / 1000)
             );
             setAnomalies(data);
         } catch (error) {
-            console.error("Error fetching historical anomalies:", error);
+            console.error("Error fetching data:", error);
         } finally {
             setLoading(false);
         }
@@ -190,7 +193,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
         <aside className="col-span-3 flex flex-col gap-6 overflow-y-auto h-full pr-2">
             
             {/* Mode Switcher */}
-            <div className="bg-[#2C2F33] rounded-xl p-1 flex">
+            <div className="bg-[#2C2F33] rounded-xl p-1 flex gap-1">
                 <button 
                     onClick={() => setMode('historical')}
                     className={clsx(
@@ -198,7 +201,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
                         mode === 'historical' ? "bg-primary text-background-dark" : "text-white/60 hover:text-white"
                     )}
                 >
-                    Historical
+                    History
+                </button>
+                <button 
+                    onClick={() => setMode('research')}
+                    className={clsx(
+                        "flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2",
+                        mode === 'research' ? "bg-purple-500 text-white" : "text-white/60 hover:text-white"
+                    )}
+                >
+                    <Beaker className="size-4" />
+                    Research
                 </button>
                 <button 
                     onClick={() => setMode('realtime')}
@@ -208,22 +221,51 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectAnomaly, selectedAnoma
                     )}
                 >
                     <Radio className={clsx("size-4", mode === 'realtime' && "animate-pulse")} />
-                    Realtime
+                    Live
                 </button>
             </div>
 
-            {/* Date Filter (Only visible in Historical Mode) */}
-            {mode === 'historical' && (
+            {/* Date Filter (Only visible in Historical/Research Mode) */}
+            {(mode === 'historical' || mode === 'research') && (
                 <div className="bg-[#2C2F33] rounded-xl p-4 flex flex-col gap-4 shrink-0 animate-in fade-in slide-in-from-top-2">
                     <p className="text-white text-base font-bold leading-tight">Filter by Date</p>
                     <div className="flex items-center p-1 justify-between">
-                        <button onClick={() => changeDate(-1)} className="text-white/80 hover:text-white p-1 rounded hover:bg-white/10">
+                        <button onClick={() => changeDate(-1)} className="text-white/80 hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
                             <ChevronLeft className="size-6" />
                         </button>
-                        <p className="text-white text-sm font-bold leading-tight flex-1 text-center">
-                            {selectedDate.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })}
-                        </p>
-                        <button onClick={() => changeDate(1)} className="text-white/80 hover:text-white p-1 rounded hover:bg-white/10">
+                        
+                        <div className="flex-1 flex items-center justify-center gap-2 relative group cursor-pointer py-1 rounded hover:bg-white/5 transition-colors" onClick={() => {
+                            // Programmatically trigger the date input
+                            const input = document.getElementById('date-picker');
+                            if (input && 'showPicker' in input) {
+                                (input as any).showPicker();
+                            }
+                        }}>
+                            <Calendar className="size-4 text-white/60 group-hover:text-white transition-colors" />
+                            <p className="text-white text-sm font-bold leading-tight text-center select-none">
+                                {selectedDate.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                            <input 
+                                id="date-picker"
+                                type="date"
+                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10 pointer-events-auto"
+                                value={selectedDate.toISOString().split('T')[0]}
+                                onChange={(e) => {
+                                    if (e.target.value) {
+                                        const parts = e.target.value.split('-');
+                                        // Create date using local time components to avoid timezone shifts
+                                        const newDate = new Date(
+                                            parseInt(parts[0]), 
+                                            parseInt(parts[1]) - 1, 
+                                            parseInt(parts[2])
+                                        );
+                                        setSelectedDate(newDate);
+                                    }
+                                }}
+                            />
+                        </div>
+
+                        <button onClick={() => changeDate(1)} className="text-white/80 hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
                             <ChevronRight className="size-6" />
                         </button>
                     </div>

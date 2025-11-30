@@ -9,6 +9,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const tabs = [
     { name: 'Analyze', path: '/analyze' },
     { name: 'Search', path: '/search' },
+    { name: 'Upload', path: '/upload' },
   ];
 
   // Handle root path active state

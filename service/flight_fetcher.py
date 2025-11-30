@@ -11,7 +11,7 @@ from rules.rule_engine import AnomalyRuleEngine
 def get(flight_id="3bc6854c"):
     from fr24sdk.client import Client
 
-    client = Client(api_token="019a9d54-678a-73da-a927-1f7a60b27a8f|xouEuixtJFLIlwNKajdW0mFjV4sguJsf5eByvIYTde7f4b26")
+    client = Client(api_token="019aca50-8288-7260-94b5-6d82fbeb351c|dC21vuw2bsf2Y43qAlrBKb7iSM9ibqSDT50x3giN763b577b")
     # emo = client.flight_summary.get_light(flight_datetime_to=datetime.now()  - timedelta(minutes=1) , flight_datetime_from=datetime.now() - timedelta(minutes=15), callsigns=["CYF461"])
 
     tracks = client.flight_tracks.get(flight_id=[flight_id])
@@ -50,7 +50,7 @@ def search_flight_path(callsign: str, start_date: datetime, end_date: datetime):
     Returns a FlightTrack object or None if not found.
     """
     from fr24sdk.client import Client
-    client = Client(api_token="019a9d54-678a-73da-a927-1f7a60b27a8f|xouEuixtJFLIlwNKajdW0mFjV4sguJsf5eByvIYTde7f4b26")
+    client = Client(api_token="019aca50-8288-7260-94b5-6d82fbeb351c|dC21vuw2bsf2Y43qAlrBKb7iSM9ibqSDT50x3giN763b577b")
 
     # Search for flight summary
     try:

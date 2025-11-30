@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { ResultsView } from '../components/ResultsView';
 import { ChatInterface } from '../components/ChatInterface';
 import type { AnalysisResult } from '../types';
-import { Search } from 'lucide-react';
+import { Search, UploadCloud } from 'lucide-react';
 
 export const AnalyzePage: React.FC = () => {
   const [flightId, setFlightId] = useState('3bc6854c');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
   const handleAnalyze = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -17,9 +20,11 @@ export const AnalyzePage: React.FC = () => {
     setLoading(true);
     setError(null);
     setResult(null);
+    setUploadStatus(null);
 
     try {
-      const response = await fetch(`/api/analyze/${flightId}`);
+      const API_BASE = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${API_BASE}/api/analyze/${flightId}`);
       if (!response.ok) {
         const err = await response.json();
         throw new Error(err.detail || "Analysis failed");
@@ -31,6 +36,37 @@ export const AnalyzePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUpload = async () => {
+      if (!result || !result.summary.flight_id) return;
+      
+      setUploadLoading(true);
+      setUploadStatus(null);
+      
+      try {
+          const API_BASE = import.meta.env.VITE_API_URL || '';
+          const feedbackResponse = await fetch(`${API_BASE}/api/feedback`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              flight_id: result.summary.flight_id,
+              is_anomaly: true,
+              comments: "Manual upload via Analyze Page"
+            }),
+          });
+          
+          if (!feedbackResponse.ok) {
+             throw new Error("Failed to save feedback");
+          }
+          setUploadStatus('Successfully saved to anomalies database.');
+      } catch (e) {
+          setUploadStatus('Failed to save to anomalies database.');
+      } finally {
+          setUploadLoading(false);
+      }
   };
 
   return (
@@ -66,6 +102,25 @@ export const AnalyzePage: React.FC = () => {
         isLoading={loading} 
         error={error} 
       />
+
+      {/* Upload Button Section */}
+      {result && (
+          <div className="flex flex-col items-end gap-2 px-4">
+               <button 
+                  onClick={handleUpload}
+                  disabled={uploadLoading}
+                  className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold transition-colors disabled:opacity-50"
+               >
+                   <UploadCloud className="h-5 w-5" />
+                   {uploadLoading ? 'Uploading...' : 'Upload as Anomaly'}
+               </button>
+               {uploadStatus && (
+                   <span className={uploadStatus.includes('Success') ? 'text-green-500 font-medium' : 'text-red-500 font-medium'}>
+                       {uploadStatus}
+                   </span>
+               )}
+          </div>
+      )}
 
       {/* Chat Interface - Only show when data is available */}
       {result && <ChatInterface data={result} flightId={flightId} />}

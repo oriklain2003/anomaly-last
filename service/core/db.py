@@ -16,7 +16,9 @@ class DbConfig:
 
 
 class FlightRepository:
-    def __init__(self, config: DbConfig):
+    def __init__(self, config: Optional[DbConfig] = None):
+        if config is None:
+            config = DbConfig(path=Path("last.db"))
         self._config = config
 
     @contextmanager
@@ -69,6 +71,26 @@ class FlightRepository:
             )
             return [self._row_to_point(row) for row in cursor.fetchall()]
 
+    def fetch_tracks_in_box(self, min_lat: float, max_lat: float, min_lon: float, max_lon: float) -> List[FlightTrack]:
+        """Fetch all flight tracks that have points within the specified bounding box."""
+        with self._connection() as conn:
+            # First find flight IDs that have points in the box
+            # This assumes we want the whole track if any part is in the box, 
+            # or at least matches the user's "fetch flights in box" intent.
+            cursor = conn.execute(
+                f"""
+                SELECT DISTINCT flight_id
+                FROM {self._config.table}
+                WHERE lat BETWEEN ? AND ?
+                  AND lon BETWEEN ? AND ?
+                """,
+                (min_lat, max_lat, min_lon, max_lon),
+            )
+            flight_ids = [row[0] for row in cursor.fetchall()]
+            
+        # Then fetch full tracks
+        return [self.fetch_flight(fid) for fid in flight_ids]
+
     @staticmethod
     def _row_to_point(row) -> TrackPoint:
         (
@@ -97,4 +119,3 @@ class FlightRepository:
             callsign=callsign,
             source=source,
         )
-

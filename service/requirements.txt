@@ -10,3 +10,4 @@ torch
 fastapi
 uvicorn
 pydantic
+hdbscan

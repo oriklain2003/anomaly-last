@@ -1,928 +1,144 @@
 {
   "filtered_flights": [
     {
-      "flight_id": "3c11b352",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d2e4cdb",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3bc369ba",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d359abb",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b3cd262",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d359f7d",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b680a49",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d390cc0",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b7ef55c",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d31eccd",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b3c58d9",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d2f4529",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3bcf2fd7",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d31f6ef",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b731142",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d3900c9",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b7ad919",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d31d7ff",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3affb4c1",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d367cd0",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b0ac293",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d36704b",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b7adfc0",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d2f18f7",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3bdb221a",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d329bdf",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b1694d9",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d35997c",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b03a042",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d2f2c3c",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b63795a",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d2e5948",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b67b59e",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d35a0dc",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3bdf76cd",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d35a018",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b6381e1",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d31f81c",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3af42419",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d313b96",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3bcf44bd",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d39eb71",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3bbc0cb0",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d3411e8",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b5beb59",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d31fa06",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b6c2605",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d2f48e3",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b6c4646",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d304f69",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b774de8",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d341b98",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b830f30",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d32ef4d",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3bc78481",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d350b30",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3bd750c8",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d2f3606",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b448f4e",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d31472e",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b29245e",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d3ae7c0",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3ba3ba62",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d367aae",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3b2d7615",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d31f860",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3bcf1682",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d390732",
+      "reason": "No point above 5600.0 ft"
     },
     {
-      "flight_id": "3c093559",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bbbf072",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b5b7cff",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b2cdcda",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c021851",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b12ad8d",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bb73fc9",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3aff8617",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bfe0db6",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3afbd819",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bcfa572",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b29144a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b0abfff",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b1a6616",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b0ad93b",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bbfc6d4",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b9f8a64",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bfec62a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b6fb32e",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b34e372",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b5f6539",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bbc02cb",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bc7693c",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b67ef7d",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b13184a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b7b5edd",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bb321f6",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c158802",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b44903d",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3be35f6b",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bc7172e",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bef56f7",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bc77e87",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bf7182c",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b2cf653",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b1af2ff",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bf7284b",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3afb37c8",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b0e7103",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b7b393f",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b923111",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c119588",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b63fa8e",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b127d97",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bbfda64",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b6c31c1",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c122dd1",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b4712bc",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b168b79",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bf6dede",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b67f6df",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b7f1b48",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bfaf94f",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b637e3c",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c0621da",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b6c3017",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3baeddc8",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b9307fd",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b97229c",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bd70b3e",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bfe6f5d",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b167a6c",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b40484b",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b1af2c4",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b8318ea",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3be320b4",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bf36506",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b0f1746",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3babb5ae",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3baf35ee",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3aef8e74",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b0056df",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b50e33a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3aeb9625",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b577648",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b9f3c74",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b96ba99",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b0b20d6",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bc3cf55",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b92c96f",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3be6e107",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b8725cb",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b9ef314",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b9fac16",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b546835",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3baf3e3a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bdb48a4",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b7b0d08",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c15f603",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b480401",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c121dcb",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b0018b7",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b2d13f4",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b507511",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b97269d",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b40af7e",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3ba34bd0",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b408e6c",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b449de7",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c0e1340",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bcfc27c",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b773d30",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b57a26a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bb7e9bf",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3ba35c50",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3baf5a7a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b50ca8d",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3baf8de0",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b7b03f2",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bb37d08",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bf337ca",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b16b735",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b1a6bd5",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b28e3c4",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bc04aaf",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bd7d6e1",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b2cf2a1",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b930810",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bd7b045",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b9f3dc3",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bfb637a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b54cc36",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b875695",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c05bb39",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b0eec21",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b67e3c6",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b67e5ba",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b76e5d2",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b9f3889",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b1e57fd",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b20e762",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b4cadc1",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bbf8427",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3ba76863",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bc438e1",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bf34b98",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bfb506c",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b67dc04",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b126d3b",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b4ca64a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bcb6992",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3be00453",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b8ef947",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c06242d",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b57e24b",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3affeb0d",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b03d4c0",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3afbea1f",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b002eb5",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bbb9495",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bc6f348",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bdfb6a2",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b583ac8",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b7745c2",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b0ef919",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bc79ba6",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b1671ab",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b9fb2e7",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bf7691b",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3af6c66b",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b1a9e7e",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b3ccb58",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b3cefc6",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bd7a6dc",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c15c7ac",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b16e925",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b776e0e",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bdb9982",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3c15d13e",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3aeba79a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3afbea8e",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b5ee420",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b03adbc",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3affeca3",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b252a27",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b2d0510",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b34fe61",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b35080a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3aeba8e1",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3af7ef6e",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3afbec9c",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3affedd9",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b072c64",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b1317ae",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b255f4a",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b28eede",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b392100",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b4c3a59",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b57e266",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b6fc188",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3bdff764",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b483e8b",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b4c3b7f",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b546a6b",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b546a7c",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b6bf1e8",
-      "reason": "No point above 5000 ft"
-    },
-    {
-      "flight_id": "3b6c2b8a",
-      "reason": "No point above 5000 ft"
+      "flight_id": "3d32e4ca",
+      "reason": "No point above 5600.0 ft"
     }
   ]
 }

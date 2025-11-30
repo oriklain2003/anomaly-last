@@ -150,6 +150,17 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ data, flightId, isLoad
                   barLabel="Probability"
                   delay="700ms"
                 />
+
+                {/* Hybrid */}
+                <ModelCard 
+                  title="Hybrid CNN-Trans"
+                  status={data?.layer_6_hybrid?.status}
+                  score={data?.layer_6_hybrid?.score}
+                  isAnomaly={data?.layer_6_hybrid?.is_anomaly}
+                  label="Anomaly Score"
+                  barLabel="Probability"
+                  delay="800ms"
+                />
             </div>
         </div>
       )}
@@ -241,6 +252,7 @@ const RuleCard: React.FC<{ result?: RuleResult; delay?: string }> = ({ result, d
 const RuleItem: React.FC<{ rule: RuleDefinition }> = ({ rule }) => {
     const [isOpen, setIsOpen] = useState(false);
     const hasEvents = rule.details?.events && rule.details.events.length > 0;
+    const isPathDeviation = rule.id === 11 && rule.details?.segments;
 
     return (
         <div className={clsx(
@@ -266,18 +278,51 @@ const RuleItem: React.FC<{ rule: RuleDefinition }> = ({ rule }) => {
                 </div>
                 <div className="flex items-center gap-4">
                     {rule.matched && <span className="text-xs font-bold text-red-500 uppercase tracking-wider">Triggered</span>}
-                    {hasEvents && (
+                    {(hasEvents || isPathDeviation) && (
                         <ChevronDown className={clsx("h-4 w-4 text-gray-400 transition-transform", isOpen && "rotate-180")} />
                     )}
                 </div>
             </button>
             
             {/* Details Panel */}
-            {isOpen && hasEvents && (
+            {isOpen && (
                  <div className="p-3 pt-0 pl-11 text-xs font-mono text-gray-600 dark:text-gray-300">
-                     <div className="p-2 bg-black/5 dark:bg-black/20 rounded border border-black/5 dark:border-white/5 overflow-x-auto">
-                        <pre>{JSON.stringify(rule.details.events, null, 2)}</pre>
-                     </div>
+                     {hasEvents && (
+                         <div className="p-2 bg-black/5 dark:bg-black/20 rounded border border-black/5 dark:border-white/5 overflow-x-auto mb-2">
+                            <pre>{JSON.stringify(rule.details.events, null, 2)}</pre>
+                         </div>
+                     )}
+                     
+                     {isPathDeviation && (
+                         <div className="space-y-2">
+                             {Object.entries(rule.details.segments).map(([phase, data]: [string, any]) => (
+                                 <div key={phase} className="p-2 bg-black/5 dark:bg-black/20 rounded border border-black/5 dark:border-white/5">
+                                     <div className="flex justify-between mb-1">
+                                         <span className="font-bold uppercase text-gray-500">{phase}</span>
+                                         <span className={data.match_found ? "text-green-500" : "text-red-500"}>
+                                             {data.match_found ? "MATCHED" : "NO MATCH"}
+                                         </span>
+                                     </div>
+                                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 opacity-70">
+                                         {data.match_found ? (
+                                             <>
+                                                 <span>Flow ID: {data.flow_id}</span>
+                                                 <span>Layer: {data.layer}</span>
+                                                 <span>Distance: {data.dist_nm} NM</span>
+                                             </>
+                                         ) : (
+                                             <span className="col-span-2 italic">No matching path found in library.</span>
+                                         )}
+                                         {data.closest_loose_dist_nm !== undefined && (
+                                             <span className="col-span-2 mt-1 pt-1 border-t border-white/10 text-blue-400">
+                                                 Distance to closest loose path: {data.closest_loose_dist_nm} NM
+                                             </span>
+                                         )}
+                                     </div>
+                                 </div>
+                             ))}
+                         </div>
+                     )}
                  </div>
             )}
         </div>

@@ -203,8 +203,14 @@ export const MapComponent: React.FC<MapComponentProps> = ({ points, anomalyTimes
     };
 
     if (learnedPaths && learnedPaths.layers) {
-        const strictFlows = learnedPaths.layers.strict?.flows || [];
-        const looseFlows = learnedPaths.layers.loose?.flows || [];
+        // Handle both old format (object with flows property) and new format (direct array)
+        const getFlows = (layer: any) => {
+            if (Array.isArray(layer)) return layer;
+            return layer?.flows || [];
+        };
+
+        const strictFlows = getFlows(learnedPaths.layers.strict);
+        const looseFlows = getFlows(learnedPaths.layers.loose);
         
         updateSource('paths-strict', showStrict, strictFlows);
         updateSource('paths-loose', showLoose, looseFlows);

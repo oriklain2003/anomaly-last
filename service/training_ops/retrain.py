@@ -1,4 +1,10 @@
 import sys
+# Fix for DLL load error on Windows by importing torch first
+try:
+    import torch
+except ImportError:
+    pass
+
 import logging
 import sqlite3
 from pathlib import Path

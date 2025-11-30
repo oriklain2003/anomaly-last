@@ -35,7 +35,7 @@
       "min_cruise_ft": 10000
     },
     "abrupt_turn": {
-      "heading_change_deg": 150,
+      "heading_change_deg": 160,
       "window_seconds": 90,
       "min_speed_kts": 200,
       "accumulated_turn_deg": 270,
@@ -70,6 +70,16 @@
     "signal_loss": {
       "gap_seconds": 180,
       "repeat_count": 2
+    },
+    "path_learning": {
+      "paths_file": "rules/learned_paths.json",
+      "num_samples": 120,
+      "max_average_distance_nm": 15.0,
+      "min_cluster_size": 4,
+      "min_off_course_points": 10
+    },
+    "unplanned_israel_landing": {
+      "near_airport_nm": 5
     }
   }
 }

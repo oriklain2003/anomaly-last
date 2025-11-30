@@ -32,7 +32,7 @@ MAX_LAT = TRAIN_NORTH
 MIN_LON = TRAIN_WEST
 MAX_LON = TRAIN_EAST
 
-API_TOKEN = "019a9d54-678a-73da-a927-1f7a60b27a8f|xouEuixtJFLIlwNKajdW0mFjV4sguJsf5eByvIYTde7f4b26"
+API_TOKEN = "019aca50-8288-7260-94b5-6d82fbeb351c|dC21vuw2bsf2Y43qAlrBKb7iSM9ibqSDT50x3giN763b577b"
 POLL_INTERVAL = 10  # seconds
 MIN_POINTS_FOR_ANALYSIS = 50 # Need history for ML models
 import logging
@@ -78,6 +78,11 @@ class RealtimeMonitor:
         self.pipeline = AnomalyPipeline()
         self.setup_db()
         
+        # Initialize Memory Repo - DISABLED per user request (too much memory)
+        # from core.memory_repo import InMemoryRepository
+        # self.memory_repo = InMemoryRepository(self.active_flights)
+        self.memory_repo = None
+        
     def setup_db(self):
         # 1. Reports DB
         conn = sqlite3.connect(str(DB_PATH))
@@ -91,6 +96,14 @@ class RealtimeMonitor:
                 severity_cnn REAL,
                 severity_dense REAL,
                 full_report JSON
+            )
+        """)
+        # 1b. Ignored Flights Table (for feedback handling)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ignored_flights (
+                flight_id TEXT PRIMARY KEY,
+                timestamp INTEGER,
+                reason TEXT
             )
         """)
         conn.commit()
@@ -193,6 +206,18 @@ class RealtimeMonitor:
 
     def fetch_and_process(self):
         try:
+            # Load ignored flights first
+            ignored_ids = set()
+            try:
+                conn = sqlite3.connect(str(DB_PATH))
+                cursor = conn.cursor()
+                cursor.execute("SELECT flight_id FROM ignored_flights")
+                rows = cursor.fetchall()
+                ignored_ids = {r[0] for r in rows}
+                conn.close()
+            except Exception as e:
+                logger.error(f"Failed to load ignored flights: {e}")
+
             logger.info("Fetching live positions...")
             response = self.client.live.flight_positions.get_full(bounds=self.boundary, altitude_ranges=["1000-50000"])
             
@@ -200,6 +225,7 @@ class RealtimeMonitor:
             current_ids = set()
             
             for item in live_data:
+                time.sleep(1)
                 flight_id = item["fr24_id"]
 
                 # Check callsign prefixes
@@ -252,6 +278,7 @@ class RealtimeMonitor:
                             self.sync_points_to_db(hist_points_to_sync)
                             logger.info(f"Loaded {len(track_points)} historical points for {flight_id}")
                     except Exception as e:
+                        time.sleep(5)
                         logger.warning(f"Could not fetch history for {flight_id}: {e}")
                 
                 state = self.active_flights[flight_id]
@@ -295,11 +322,15 @@ class RealtimeMonitor:
                 # Analyze every 10 new points (approx 1-2 mins) to save CPU
                 if len(state.points) >= MIN_POINTS_FOR_ANALYSIS:
                     if len(state.points) - state.last_analyzed_count >= 10:
+                        # Skip analysis if flight is ignored (feedback given)
+                        if flight_id in ignored_ids:
+                            state.last_analyzed_count = len(state.points)
+                            continue
+
                         # Run Pipeline
                         track = state.to_flight_track()
-                        # We could pass self.active_flights here if pipeline supported context
-                        # For now, we rely on single-flight analysis
-                        report = self.pipeline.analyze(track)
+                        # Pass memory repo for context-aware rules (Disabled for now)
+                        report = self.pipeline.analyze(track, repository=None)
                         self.log_report(report)
                         state.last_analyzed_count = len(state.points)
 

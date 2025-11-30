@@ -1,14 +1,25 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+import numpy as np
+
 from core.config import load_rule_config
-from core.geodesy import cross_track_distance_nm, haversine_nm, initial_bearing_deg
+from core.geodesy import (
+    cross_track_distance_nm,
+    haversine_nm,
+    initial_bearing_deg,
+    is_point_in_polygon,
+    create_corridor_polygon,
+)
 from core.models import FlightTrack, RuleContext, RuleResult, TrackPoint
 
 CONFIG = load_rule_config()
 RULES = CONFIG.get("rules", {})
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def _require_rule_config(rule_name: str) -> Dict[str, Any]:
@@ -62,6 +73,16 @@ SIGNAL_CFG = _require_rule_config("signal_loss")
 SIGNAL_GAP_SECONDS = int(SIGNAL_CFG["gap_seconds"])
 SIGNAL_REPEAT_COUNT = int(SIGNAL_CFG["repeat_count"])
 
+UNPLANNED_LANDING_CFG = _require_rule_config("unplanned_israel_landing")
+UNPLANNED_LANDING_RADIUS_NM = float(UNPLANNED_LANDING_CFG["near_airport_nm"])
+
+PATH_CFG = _require_rule_config("path_learning")
+_path_candidate = Path(PATH_CFG["paths_file"])
+PATH_FILE = (_path_candidate if _path_candidate.is_absolute() else (PROJECT_ROOT / _path_candidate)).resolve()
+PATH_NUM_SAMPLES = int(PATH_CFG.get("num_samples", 120))
+PATH_MAX_AVG_NM = float(PATH_CFG.get("max_average_distance_nm", 10.0))
+PATH_MIN_CLUSTER_SIZE = int(PATH_CFG.get("min_cluster_size", 4))
+
 
 @dataclass(frozen=True)
 class Airport:
@@ -76,18 +97,50 @@ AIRPORTS: List[Airport] = [Airport(**entry) for entry in AIRPORT_ENTRIES]
 AIRPORT_BY_CODE: Dict[str, Airport] = {a.code: a for a in AIRPORTS}
 
 
+def is_bad_segment(prev: TrackPoint, curr: TrackPoint) -> bool:
+    dt = curr.timestamp - prev.timestamp
+    if dt <= 0:
+        return True
+
+    # 1. Teleport / impossible movement
+    max_nm = (curr.gspeed or prev.gspeed or 350) * dt / 3600
+    dist_nm = haversine_nm(prev.lat, prev.lon, curr.lat, curr.lon)
+    if dist_nm > max_nm * 3:
+        return True
+
+    # 2. Impossible heading jump
+    if prev.track is not None and curr.track is not None:
+        dh = abs(((curr.track - prev.track + 540) % 360) - 180)
+        if dh > 80:
+            return True
+
+    # 3. FR24 ocean gap -> ignore off-course
+    # Far from land + cruise altitude = probably artifact
+    nearest_airport, dist_ap = _nearest_airport(curr)
+    if (curr.alt or 0) > 15000 and (dist_ap or 999) > 60:
+        return True
+
+    # 4. Zero-altitude glitch at high speed
+    if (curr.alt or 0) < 200 and (curr.gspeed or 0) > 200:
+        return True
+
+    return False
+
+
 def evaluate_rule(context: RuleContext, rule_id: int) -> RuleResult:
     evaluators = {
         1: _rule_emergency_squawk,
         2: _rule_extreme_altitude_change,
         3: _rule_abrupt_turn,
         4: _rule_dangerous_proximity,
-        # 5: _rule_route_deviation,
         6: _rule_go_around,
         7: _rule_takeoff_return,
         8: _rule_diversion,
         9: _rule_low_altitude,
-        # 10: _rule_signal_loss,
+        10: _rule_signal_loss,
+        12: _rule_unplanned_israel_landing,
+        # NEW clean path deviation rule
+        1007: _rule_off_course,
     }
     evaluator = evaluators.get(rule_id)
     if evaluator is None:
@@ -261,12 +314,14 @@ def _rule_abrupt_turn(ctx: RuleContext) -> RuleResult:
     points = ctx.track.sorted_points()
     events = []
 
-    # Need at least 4 points to smooth and validate
     if len(points) < 4:
         return RuleResult(3, False, "Not enough datapoints", {})
 
+    # -----------------------------
+    # 1. Detect abrupt single-point turns (existing logic kept)
+    # -----------------------------
+
     def smooth_heading(i):
-        """3-point moving average smoothing"""
         if i == 0 or i == len(points) - 1:
             return points[i].track
         prev_h = points[i - 1].track
@@ -280,6 +335,9 @@ def _rule_abrupt_turn(ctx: RuleContext) -> RuleResult:
         prev = points[i - 1]
         curr = points[i]
 
+        if is_bad_segment(prev, curr):
+            continue
+
         if prev.track is None or curr.track is None:
             continue
 
@@ -287,14 +345,11 @@ def _rule_abrupt_turn(ctx: RuleContext) -> RuleResult:
         if dt <= 0 or dt > TURN_WINDOW_SECONDS:
             continue
 
-        # Reject impossible position jumps
         dist_nm = haversine_nm(prev.lat, prev.lon, curr.lat, curr.lon)
         max_possible_nm = (curr.gspeed or 300) * dt / 3600.0
         if dist_nm > max_possible_nm * 3.0:
-            # FR24/ADSB glitch → skip
             continue
 
-        # Smooth headings
         prev_h = smooth_heading(i - 1)
         curr_h = smooth_heading(i)
 
@@ -303,21 +358,13 @@ def _rule_abrupt_turn(ctx: RuleContext) -> RuleResult:
 
         diff = _heading_diff(curr_h, prev_h)
 
-        # Reject aerodynamically impossible turn rate
-        # Typical max turn: ~3°/sec (5°/sec extreme)
-        if abs(diff) / dt > 5.0:  # deg/s
+        # aerodynamically impossible
+        if abs(diff) / dt > 5.0:
             continue
 
-        # Still require high speed (turning matters only then)
+        # ignore if too slow
         if (curr.gspeed or 0.0) < TURN_MIN_SPEED_KTS:
             continue
-
-        # Require multiple consecutive points showing same turn direction
-        if i + 2 < len(points):
-            n1 = _heading_diff(smooth_heading(i + 1), curr_h)
-            n2 = _heading_diff(smooth_heading(i + 2), smooth_heading(i + 1))
-            if not (abs(n1) > 20 and abs(n2) > 20):
-                continue
 
         if abs(diff) >= TURN_THRESHOLD_DEG:
             events.append({
@@ -326,95 +373,126 @@ def _rule_abrupt_turn(ctx: RuleContext) -> RuleResult:
                 "dt_s": dt,
                 "smoothed_prev": round(prev_h, 2),
                 "smoothed_curr": round(curr_h, 2),
-                "distance_nm": round(dist_nm, 3),
-                "turn_rate_deg_s": round(abs(diff) / dt, 2)
             })
 
-    # ---------------------------------------
-    # NEW: Cumulative Turn / Holding Pattern
-    # ---------------------------------------
-    # Scan for accumulated heading changes over a longer window (e.g. 360 deg in 5 mins)
-    
-    # Optimization: Only check every Nth point to save cycles, or just check all.
-    # Since N is small (<1000 usually), checking all is fine.
+    # ==========================================================
+    # ========== 2. NEW → Clean Holding Pattern Detection =======
+    # ==========================================================
 
-    matched_intervals = []
+    TURN_MIN_DURATION = 45        # must be at least 45 seconds (allows 180 turn)
+    TURN_RATE_MAX = 10.0          # deg/sec threshold (increased for tighter turns)
+    TURN_MIN_SPEED = 80           # kts
+    TURN_MIN_ALT = 1500           # ft
+    ACC_THRESHOLD_180 = 160       # half-turn
+    ACC_THRESHOLD_360 = 320       # full orbit
+    TURN_MAX_ACCEL_KTS_S = 10.0   # NEW: max acceleration to reject speed glitches
 
+    def signed_delta(h1, h0):
+        """Return signed heading delta in [-180, 180]."""
+        return ((h1 - h0 + 540) % 360) - 180
+
+    # Holding-pattern scan
     for start_idx in range(len(points)):
         start_p = points[start_idx]
-        cumulative_turn = 0.0
 
+        if start_p.track is None or (start_p.gspeed or 0) < TURN_MIN_SPEED or (start_p.alt or 0) < TURN_MIN_ALT:
+            continue
+
+        # START POINT SANITY CHECK
+        # If the start point itself is the result of a massive instantaneous jump from the previous point,
+        # it is likely a glitch start and should not be used as the anchor for a turn analysis.
+        if start_idx > 0:
+            p_prev = points[start_idx - 1]
+            dt_prev = start_p.timestamp - p_prev.timestamp
+            # Ensure previous point is recent enough to matter
+            if 0 < dt_prev < TURN_ACC_WINDOW and p_prev.track is not None:
+                dh_prev = signed_delta(start_p.track, p_prev.track)
+                rate_prev = abs(dh_prev) / dt_prev
+                accel_prev = abs((start_p.gspeed or 0) - (p_prev.gspeed or 0)) / dt_prev
+
+                if rate_prev > TURN_RATE_MAX or accel_prev > TURN_MAX_ACCEL_KTS_S:
+                    continue
+
+        cumulative = 0.0
+        direction = None
+
+        prev_idx = start_idx
         for end_idx in range(start_idx + 1, len(points)):
-            curr_p = points[end_idx]
-            prev_p = points[end_idx - 1]
+            p0 = points[prev_idx]
+            p1 = points[end_idx]
 
-            # Skip missing data
-            if curr_p.track is None or prev_p.track is None:
-                continue
-
-            # ------------------------------------
-            # NEW: Reject taxi / ground noise
-            # ------------------------------------
-            if (prev_p.gspeed or 0) < 80 or (curr_p.gspeed or 0) < 80:
-                continue
-
-            # ------------------------------------
-            # NEW: Reject low altitude phases
-            # ------------------------------------
-            if (curr_p.alt or 0) < 500:
-                continue
-
-            # Time window check
-            if curr_p.timestamp - start_p.timestamp > TURN_ACC_WINDOW:
+            if p1.timestamp - start_p.timestamp > TURN_ACC_WINDOW:
                 break
 
-            dt = curr_p.timestamp - prev_p.timestamp
+            if p1.track is None:
+                continue
+            if (p1.gspeed or 0) < TURN_MIN_SPEED:
+                continue
+            if (p1.alt or 0) < TURN_MIN_ALT:
+                continue
+
+            dt = p1.timestamp - p0.timestamp
             if dt <= 0:
                 continue
-
-            # Heading delta
-            d_h = _heading_diff(curr_p.track, prev_p.track)
-
-            # ------------------------------------
-            # NEW: Reject impossible turn rates
-            # ------------------------------------
-            turn_rate = abs(d_h) / dt
-            if turn_rate > 5.0:  # deg/sec
+            
+            # Acceleration check (reject speed glitches)
+            accel = abs((p1.gspeed or 0) - (p0.gspeed or 0)) / dt
+            if accel > TURN_MAX_ACCEL_KTS_S:
                 continue
 
-            cumulative_turn += d_h
-
-            # ------------------------------------
-            # NEW: Require minimum duration to avoid noise
-            # ------------------------------------
-            if curr_p.timestamp - start_p.timestamp < 45:
+            dh = signed_delta(p1.track, p0.track)
+            # NEW: reject multi-point drift glitch clusters
+            # If heading has drifted >120° from the start point while speed is high,
+            # it's not real – aircraft can't reverse direction at cruise speeds.
+            drift_from_start = abs(signed_delta(p1.track, start_p.track))
+            if drift_from_start > 120 and (p1.gspeed or 0) > 250:
+                break
+            # turn rate sanity
+            if abs(dh) / dt > TURN_RATE_MAX:
                 continue
 
-            # Threshold for holding/orbit detection
-            if abs(cumulative_turn) >= TURN_ACC_DEG:
+            # Update previous valid index
+            prev_idx = end_idx
 
-                # Prevent duplicates
-                is_duplicate = False
-                for m in matched_intervals:
-                    if (
-                            start_p.timestamp >= m["start_ts"] and
-                            curr_p.timestamp <= m["end_ts"]
-                    ):
-                        is_duplicate = True
-                        break
+            # establish/validate direction
+            if dh == 0:
+                continue
 
-                if not is_duplicate:
-                    evt = {
-                        "timestamp": curr_p.timestamp,
-                        "type": "holding_pattern",
-                        "start_ts": start_p.timestamp,
-                        "end_ts": curr_p.timestamp,
-                        "duration_s": curr_p.timestamp - start_p.timestamp,
-                        "cumulative_turn_deg": round(cumulative_turn, 2)
-                    }
-                    events.append(evt)
-                    matched_intervals.append(evt)
+            sign = 1 if dh > 0 else -1
+            if direction is None:
+                direction = sign
+            elif sign != direction:
+                break
 
+            cumulative += abs(dh)
+
+            duration = p1.timestamp - start_p.timestamp
+            if duration < TURN_MIN_DURATION:
+                continue
+
+            # detect events
+            if cumulative >= ACC_THRESHOLD_360:
+                events.append({
+                    "type": "holding_pattern",
+                    "timestamp": p1.timestamp,
+                    "start_ts": start_p.timestamp,
+                    "end_ts": p1.timestamp,
+                    "duration_s": duration,
+                    "cumulative_turn_deg": round(cumulative, 2),
+                    "pattern": "360_turn"
+                })
+                break
+
+            if cumulative >= ACC_THRESHOLD_180:
+                events.append({
+                    "type": "holding_pattern",
+                    "timestamp": p1.timestamp,
+                    "start_ts": start_p.timestamp,
+                    "end_ts": p1.timestamp,
+                    "duration_s": duration,
+                    "cumulative_turn_deg": round(cumulative, 2),
+                    "pattern": "180_turn"
+                })
                 break
 
     matched = bool(events)
@@ -483,71 +561,33 @@ def _rule_dangerous_proximity(ctx: RuleContext) -> RuleResult:
     matched = bool(events)
     summary = "Proximity alert triggered" if matched else "No proximity conflicts"
     return RuleResult(4, matched, summary, {"events": events})
-# def _rule_route_deviation(ctx: RuleContext) -> RuleResult:
-#     points = ctx.track.sorted_points()
-#     if len(points) < 3:
-#         return RuleResult(5, False, "Insufficient points for route analysis", {})
-#
-#     origin = (points[0].lat, points[0].lon)
-#     destination = (points[-1].lat, points[-1].lon)
-#
-#     deviations = [
-#         cross_track_distance_nm(origin, destination, (p.lat, p.lon)) for p in points[1:-1]
-#     ]
-#     max_dev = max(deviations) if deviations else 0.0
-#     matched = max_dev >= ROUTE_DEVIATION_NM
-#     summary = (
-#         f"Cross-track deviation {max_dev:.1f} NM exceeds threshold"
-#         if matched
-#         else "Route deviation within acceptable bounds"
-#     )
-#     return RuleResult(5, matched, summary, {"max_deviation_nm": round(max_dev, 2)})
 
 
 RUNWAY_HEADINGS = {
-"LCRA": [100, 280],   # RAF Akrotiri (Runway 10/28)
-
-"ALJAWZAH": [135, 315],
-"HEGR": [160, 340],   # El Gora Airport (Runway 16/34)
-
-
-
-    # --------------------------
-    # 🇮🇱 ISRAEL
-    # --------------------------
-    "LLBG": [76, 256],       # Ben Gurion (Runway 12/30 ~ 116/296 also exists but rarely used)
-    "LLHA": [155, 335],      # Haifa (Runway 16/34)
-    "LLER": [9, 189],        # Ramon Intl (Runway 01/19)
-    "LLSD": [140, 320],      # Sde Dov (closed but heading is correct)
-    "LLBS": [143, 323],      # Beersheba / Teyman (Runway 14/32)
-    "LLET": [86, 266],       # Eilat (old airport, runway 08/26)
-    "LLOV": [30, 210],       # Ovda (Runway 03/21)
-    "LLNV": [100, 280],      # Nevatim AFB (Runway 10/28)
-    "LLMG": [80, 260],       # Megiddo (Runway 08/26)
-    "LLHZ": [160, 340],      # Herzliya (Runway 16/34)
-
-    # --------------------------
-    # 🇱🇧 LEBANON
-    # --------------------------
-    "OLBA": [155, 335],      # Beirut Rafic Hariri (Runway 16/34)
-    "OLKA": [90, 270],       # Rayak AB (Runway 09/27)
-
-    # --------------------------
-    # 🇯🇴 JORDAN
-    # --------------------------
-    "OJAI": [75, 255],       # Queen Alia Intl (Runway 08/26)
-    "OJAM": [61, 241],       # Marka Intl (Runway 06/24 ~ 058/238)
-    "OJAQ": [20, 200],       # Aqaba King Hussein (Runway 02/20)
-    "OJMF": [150, 330],      # Mafraq AB (Runway 15/33)
-    "OJJR": [113, 293],      # Jerash (Runway 11/29)
-    "OJMN": [142, 322],      # Ma'an (Runway 14/32)
-
-    # --------------------------
-    # 🇸🇾 SYRIA (within your bounding box)
-    # --------------------------
-    "OSDI": [50, 230],       # Damascus Intl (Runway 05/23)
-    "OSKL": [75, 255],       # Al Qusayr (Runway 08/26)
-    "OSAP": [35, 215],       # An Nasiriya AB (Runway 04/22)
+    "LCRA": [100, 280],   # RAF Akrotiri
+    "ALJAWZAH": [135, 315],
+    "HEGR": [160, 340],   # El Gora Airport
+    "LLBG": [76, 256],    # Ben Gurion
+    "LLHA": [155, 335],   # Haifa
+    "LLER": [9, 189],     # Ramon Intl
+    "LLSD": [140, 320],   # Sde Dov
+    "LLBS": [143, 323],   # Beersheba
+    "LLET": [86, 266],    # Eilat
+    "LLOV": [30, 210],    # Ovda
+    "LLNV": [100, 280],   # Nevatim AFB
+    "LLMG": [80, 260],    # Megiddo
+    "LLHZ": [160, 340],   # Herzliya
+    "OLBA": [155, 335],   # Beirut
+    "OLKA": [90, 270],    # Rayak AB
+    "OJAI": [75, 255],    # Queen Alia Intl
+    "OJAM": [61, 241],    # Marka Intl
+    "OJAQ": [20, 200],    # Aqaba
+    "OJMF": [150, 330],   # Mafraq AB
+    "OJJR": [113, 293],   # Jerash
+    "OJMN": [142, 322],   # Ma'an
+    "OSDI": [50, 230],    # Damascus Intl
+    "OSKL": [75, 255],    # Al Qusayr
+    "OSAP": [35, 215],    # An Nasiriya AB
 }
 
 def _heading_diff(h1, h2):
@@ -613,6 +653,7 @@ def _rule_go_around(ctx: RuleContext) -> RuleResult:
     matched = bool(events)
     summary = "Go-around detected" if matched else "No go-around patterns"
     return RuleResult(6, matched, summary, {"events": events})
+
 
 def _rule_takeoff_return(ctx: RuleContext) -> RuleResult:
     points = ctx.track.sorted_points()
@@ -727,10 +768,13 @@ def _rule_low_altitude(ctx: RuleContext) -> RuleResult:
             dt = p.timestamp - last_ts
             if dt > 0:
                 rate = (last_alt - alt) / dt
-                if rate > 100 and (dist is None or dist > 10):
-                    last_alt = alt
-                    last_ts = p.timestamp
-                    continue
+            else:
+                rate = 0.0
+            
+            if rate > 100 and (dist is None or dist > 10):
+                last_alt = alt
+                last_ts = p.timestamp
+                continue
 
         # -----------------------
         # LOW ALTITUDE CONFIRMATION
@@ -819,29 +863,170 @@ def _rule_signal_loss(ctx: RuleContext) -> RuleResult:
 
     gaps = []
     prev = points[0]
-
     for curr in points[1:]:
         dt = curr.timestamp - prev.timestamp
-
-        # Ignore gaps when the aircraft is low/ground mode
         if prev.alt < 300 or curr.alt < 300:
             prev = curr
             continue
-
-        # Real in-flight signal loss
         if dt >= SIGNAL_GAP_SECONDS:
-            gaps.append({
-                "start_ts": prev.timestamp,
-                "end_ts": curr.timestamp,
-                "gap_s": dt
-            })
-
+            gaps.append({"start_ts": prev.timestamp, "end_ts": curr.timestamp, "gap_s": dt})
         prev = curr
 
     matched = len(gaps) >= SIGNAL_REPEAT_COUNT
-    summary = "In-flight signal loss observed" if matched else "Signal continuity nominal"
+    return RuleResult(10, matched, "Signal loss" if matched else "Nominal", {"gaps": gaps})
 
-    return RuleResult(10, matched, summary, {"gaps": gaps})
+
+def _rule_unplanned_israel_landing(ctx: RuleContext) -> RuleResult:
+    metadata = ctx.metadata
+
+    if metadata is None or not metadata.planned_destination:
+        return RuleResult(12, False, "Missing planned destination", {})
+
+    planned = metadata.planned_destination.upper()
+
+    points = ctx.track.sorted_points()
+    if not points:
+        return RuleResult(12, False, "No track data", {})
+
+    last_point = points[-1]
+
+    # Find actual nearest airport (landing airport)
+    actual_airport, actual_dist = _nearest_airport(last_point)
+
+    if actual_airport is None or actual_dist > UNPLANNED_LANDING_RADIUS_NM:
+        return RuleResult(12, False, "Flight did not land at a known airport", {})
+
+    actual = actual_airport.code
+
+    # -----------------------------
+    # Core Logic:
+    # landed somewhere different than the plan → anomaly
+    # -----------------------------
+    if planned != actual:
+        return RuleResult(
+            12,
+            True,
+            f"Flight landed at {actual} instead of planned {planned}",
+            {
+                "planned": planned,
+                "actual": actual,
+                "distance_nm": round(actual_dist, 2),
+                "type": "wrong_landing_airport",
+            }
+        )
+
+    # -----------------------------
+    # Normal
+    # -----------------------------
+    return RuleResult(
+        12,
+        False,
+        "Flight landed at planned destination",
+        {
+            "planned": planned,
+            "actual": actual,
+            "distance_nm": round(actual_dist, 2),
+        }
+    )
+
+
+def _rule_off_course(ctx: RuleContext) -> RuleResult:
+    """
+    Detect if a flight has more than X points that lie >10 NM away
+    from ALL learned airway paths (loose layer).
+    """
+
+    # -----------------------------
+    # Config
+    # -----------------------------
+    RADIUS_NM = 10.0
+    MIN_OFF_POINTS = int(PATH_CFG.get("min_off_course_points", 10))  # NEW configurable threshold
+
+    # -----------------------------
+    # Load learned path library
+    # -----------------------------
+    try:
+        with open(PATH_FILE, "r", encoding="utf-8") as f:
+            learned = json.load(f)
+    except Exception as e:
+        return RuleResult(1007, False, f"Could not load learned paths: {e}", {})
+
+    layers = learned.get("layers", {})
+    loose_layer = layers.get("loose", {})
+    flows = loose_layer.get("flows", [])
+
+    if not flows:
+        return RuleResult(1007, False, "No loose-layer paths available", {})
+
+    # -----------------------------
+    # Build corridor polygons for each centroid path
+    # -----------------------------
+    polygons = []
+    for flow in flows:
+        centroid_path = flow.get("centroid_path")
+        if not centroid_path:
+            continue
+
+        path_coords = [(p["lat"], p["lon"]) for p in centroid_path]
+        poly = create_corridor_polygon(path_coords, RADIUS_NM)
+        if poly:
+            polygons.append(poly)
+
+    if not polygons:
+        return RuleResult(1007, False, "No polygons built from paths", {})
+
+    # -----------------------------
+    # Count points outside ALL corridors
+    # -----------------------------
+    off_count = 0
+    points = ctx.track.sorted_points()
+
+    for i, p in enumerate(points):
+        if i > 0 and is_bad_segment(points[i-1], p):
+            continue
+
+        latlon = (p.lat, p.lon)
+
+        # Check if inside ANY polygon
+        inside_any = False
+        for poly in polygons:
+            if is_point_in_polygon(latlon, poly):
+                inside_any = True
+                break
+
+        if not inside_any:
+            off_count += 1
+
+        # Stop early if threshold exceeded
+        if off_count >= MIN_OFF_POINTS:
+            return RuleResult(
+                1007,
+                True,
+                f"Flight deviated from all known paths ({off_count} off-course points)",
+                {
+                    "off_course_points": off_count,
+                    "total_points": len(points),
+                    "radius_nm": RADIUS_NM,
+                    "threshold": MIN_OFF_POINTS,
+                    "num_paths": len(polygons),
+                }
+            )
+
+    # -----------------------------
+    # No deviation strong enough
+    # -----------------------------
+    return RuleResult(
+        1007,
+        False,
+        "Flight remained within known path corridors",
+        {
+            "off_course_points": off_count,
+            "total_points": len(points),
+            "radius_nm": RADIUS_NM,
+            "threshold": MIN_OFF_POINTS,
+            "num_paths": len(polygons),
+        }
+    )
 
 
 def _points_near_airport(points: Sequence[TrackPoint], airport: Airport, radius_nm: float) -> List[TrackPoint]:
@@ -859,11 +1044,6 @@ def _nearest_airport(point: TrackPoint) -> Tuple[Optional[Airport], Optional[flo
     return best_airport, best_distance
 
 
-def _heading_diff(current: float, previous: float) -> float:
-    diff = (current - previous + 180) % 360 - 180
-    return diff
-
-
 def _pairwise(points: Sequence[TrackPoint]):
     iterator = iter(points)
     prev = next(iterator, None)
@@ -876,13 +1056,6 @@ def _pairwise(points: Sequence[TrackPoint]):
 def has_point_above_altitude(track: FlightTrack, altitude_ft: float = 5000.0) -> bool:
     """
     Check if a flight has at least one point above the specified altitude.
-    
-    Args:
-        track: The flight track to check
-        altitude_ft: The altitude threshold in feet (default: 5000.0)
-        
-    Returns:
-        True if any point in the track is above the threshold, False otherwise
     """
     c = 0
     for point in track.points:
@@ -892,4 +1065,3 @@ def has_point_above_altitude(track: FlightTrack, altitude_ft: float = 5000.0) ->
             else:
                 c += 1
     return False
-

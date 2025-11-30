@@ -27,7 +27,7 @@ boundary = Boundary(
     west=MIN_LON,
     east=MAX_LON
 )
-client = Client(api_token="019a9d54-678a-73da-a927-1f7a60b27a8f|xouEuixtJFLIlwNKajdW0mFjV4sguJsf5eByvIYTde7f4b26")
+client = Client(api_token="019aca50-8288-7260-94b5-6d82fbeb351c|dC21vuw2bsf2Y43qAlrBKb7iSM9ibqSDT50x3giN763b577b")
 
 response = client.live.flight_positions.get_full(bounds=boundary, altitude_ranges=["1000-50000"])
 
@@ -35,7 +35,7 @@ response = client.live.flight_positions.get_full(bounds=boundary, altitude_range
 def get():
     from fr24sdk.client import Client
 
-    client = Client(api_token="019a9d54-678a-73da-a927-1f7a60b27a8f|xouEuixtJFLIlwNKajdW0mFjV4sguJsf5eByvIYTde7f4b26")
+    client = Client(api_token="019aca50-8288-7260-94b5-6d82fbeb351c|dC21vuw2bsf2Y43qAlrBKb7iSM9ibqSDT50x3giN763b577b")
     response = client.live.flight_positions.get_full(bounds=boundary, altitude_ranges=["1000-50000"])
 
     tracks = client.flight_tracks.get(flight_id=["3bc6854c"])

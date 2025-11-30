@@ -51,29 +51,46 @@ const LayerCard: React.FC<{ title: string; data: any; type: 'rules' | 'model' }>
         return (
             <div className="mt-2 space-y-2">
                 <p className="text-xs font-bold text-white/60">Segment Analysis:</p>
-                {Object.entries(rule.details.segments).map(([phase, data]: [string, any]) => (
-                    <div key={phase} className="bg-white/5 p-2 rounded border border-white/10 text-[10px] text-white/60">
-                        <div className="flex justify-between mb-1">
-                            <span className="font-bold uppercase text-white/40">{phase}</span>
-                            <span className={data.match_found ? "text-green-400" : "text-red-400"}>
-                                {data.match_found ? "MATCH" : "NO MATCH"}
-                            </span>
-                        </div>
-                        {data.match_found ? (
-                            <div className="flex flex-col gap-0.5">
-                                <span>Flow: {data.flow_id} ({data.layer})</span>
-                                <span>Dist: {data.dist_nm} NM</span>
-                            </div>
-                        ) : (
-                            <span className="italic">No matching path</span>
-                        )}
-                        {data.closest_loose_dist_nm !== undefined && (
-                             <div className="mt-1 pt-1 border-t border-white/10 text-blue-300">
-                                 Loose Dist: {data.closest_loose_dist_nm} NM
+                {Object.entries(rule.details.segments).map(([phase, data]: [string, any]) => {
+                    // Check if phase was skipped
+                    const isSkipped = data === "skipped_phase" || data === "skipped_short" || data === "skipped_resample";
+                    
+                    if (isSkipped) {
+                        return (
+                             <div key={phase} className="bg-white/5 p-2 rounded border border-white/10 text-[10px] text-white/60 opacity-50">
+                                <div className="flex justify-between mb-1">
+                                    <span className="font-bold uppercase text-white/40">{phase}</span>
+                                    <span className="text-white/40">SKIPPED</span>
+                                </div>
+                                <span className="italic text-white/30">Not analyzed (not cruise or too short)</span>
                              </div>
-                        )}
-                    </div>
-                ))}
+                        );
+                    }
+
+                    return (
+                        <div key={phase} className="bg-white/5 p-2 rounded border border-white/10 text-[10px] text-white/60">
+                            <div className="flex justify-between mb-1">
+                                <span className="font-bold uppercase text-white/40">{phase}</span>
+                                <span className={data.match_found ? "text-green-400" : "text-red-400"}>
+                                    {data.match_found ? "MATCH" : "NO MATCH"}
+                                </span>
+                            </div>
+                            {data.match_found ? (
+                                <div className="flex flex-col gap-0.5">
+                                    <span>Flow: {data.flow_id} ({data.layer})</span>
+                                    <span>Dist: {data.dist_nm} NM</span>
+                                </div>
+                            ) : (
+                                <span className="italic">No matching path</span>
+                            )}
+                            {data.closest_loose_dist_nm !== undefined && (
+                                 <div className="mt-1 pt-1 border-t border-white/10 text-blue-300">
+                                     Loose Dist: {data.closest_loose_dist_nm} NM
+                                 </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         );
     };
@@ -268,6 +285,12 @@ export const ReportPanel: React.FC<ReportPanelProps> = ({ anomaly, onClose }) =>
                     <LayerCard 
                         title="Layer 5: Transformer" 
                         data={report.layer_5_transformer} 
+                        type="model" 
+                    />
+
+                    <LayerCard 
+                        title="Layer 6: Hybrid CNN-Transformer" 
+                        data={report.layer_6_hybrid} 
                         type="model" 
                     />
                 </div>

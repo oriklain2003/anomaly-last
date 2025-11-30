@@ -20,6 +20,17 @@ class TrajectoryResampler:
             return pd.DataFrame()
             
         timestamps = np.array([p.timestamp for p in points])
+        
+        # Remove duplicates
+        unique_indices = np.unique(timestamps, return_index=True)[1]
+        unique_indices.sort()
+        
+        if len(unique_indices) < 2:
+            return pd.DataFrame()
+            
+        points = [points[i] for i in unique_indices]
+        timestamps = timestamps[unique_indices]
+
         t_min, t_max = timestamps[0], timestamps[-1]
         if t_max == t_min:
             return pd.DataFrame()
@@ -38,6 +49,9 @@ class TrajectoryResampler:
         resampled = {"flight_id": flight.flight_id}
         
         for name, values in data.items():
+            # Replace None/NaN with 0.0 before interpolation to be safe
+            values = np.nan_to_num(values, nan=0.0)
+
             if name == "track":
                 values = np.unwrap(np.radians(values))
                 f = interp1d(t_norm, values, kind='linear', fill_value="extrapolate")
@@ -46,6 +60,10 @@ class TrajectoryResampler:
             else:
                 f = interp1d(t_norm, values, kind='linear', fill_value="extrapolate")
                 resampled[name] = f(t_target)
+
+            if np.isnan(resampled[name]).any() or np.isinf(resampled[name]).any():
+                print(f"WARNING: NaN/Inf detected in {name} after interpolation!")
+                resampled[name] = np.nan_to_num(resampled[name], nan=0.0, posinf=0.0, neginf=0.0)
                 
         resampled["progress"] = t_target
         return pd.DataFrame(resampled)

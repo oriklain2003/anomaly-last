@@ -48,6 +48,7 @@ export interface AnalysisResult {
     layer_3_deep_dense: ModelResult;
     layer_4_deep_cnn: ModelResult;
     layer_5_transformer: ModelResult;
+    layer_6_hybrid: ModelResult;
 }
 
 export interface Airport {

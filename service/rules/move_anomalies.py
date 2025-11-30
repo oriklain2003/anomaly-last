@@ -48,6 +48,7 @@ def create_anomalous_tracks_table(conn: sqlite3.Connection) -> None:
             lat REAL NOT NULL,
             lon REAL NOT NULL,
             alt REAL NOT NULL,
+            heading REAL,
             gspeed REAL,
             vspeed REAL,
             track REAL,
@@ -113,13 +114,27 @@ def move_flights_to_anomalous_table(
         
         try:
             # Insert into anomalous_tracks
-            conn.execute("""
-                INSERT OR IGNORE INTO anomalous_tracks
-                SELECT flight_id, timestamp, lat, lon, alt, gspeed, vspeed, 
-                       track, squawk, callsign, source
-                FROM flight_tracks
-                WHERE flight_id = ?
-            """, (flight_id,))
+            # Check if heading column exists in flight_tracks
+            cursor = conn.execute("PRAGMA table_info(flight_tracks)")
+            columns = [row[1] for row in cursor.fetchall()]
+            has_heading = "heading" in columns
+
+            if has_heading:
+                 conn.execute("""
+                    INSERT OR IGNORE INTO anomalous_tracks
+                    (flight_id, timestamp, lat, lon, alt, heading, gspeed, vspeed, track, squawk, callsign, source)
+                    SELECT flight_id, timestamp, lat, lon, alt, heading, gspeed, vspeed, track, squawk, callsign, source
+                    FROM flight_tracks
+                    WHERE flight_id = ?
+                """, (flight_id,))
+            else:
+                conn.execute("""
+                    INSERT OR IGNORE INTO anomalous_tracks
+                    (flight_id, timestamp, lat, lon, alt, gspeed, vspeed, track, squawk, callsign, source)
+                    SELECT flight_id, timestamp, lat, lon, alt, gspeed, vspeed, track, squawk, callsign, source
+                    FROM flight_tracks
+                    WHERE flight_id = ?
+                """, (flight_id,))
             
             # Delete from flight_tracks
             conn.execute(
@@ -185,5 +200,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
 
 

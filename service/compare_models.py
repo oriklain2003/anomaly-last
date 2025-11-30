@@ -7,6 +7,12 @@ import sqlite3
 from rich.console import Console
 from rich.table import Table
 
+# Fix for DLL load error on Windows by importing torch first
+try:
+    import torch
+except ImportError:
+    pass
+
 # Set paths correctly
 sys.path.append(str(Path(__file__).resolve().parent))
 
