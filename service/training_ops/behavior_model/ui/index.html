@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Behavior Model Map Explorer</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-QV7Z6zNK3N3C0ce9DgHLwfvgrBxrC0qyX8Yi8COrYFk="
+    crossorigin=""
+  />
+  <style>
+    :root { font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; color: #0f172a; background: #f8fafc; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 16px; }
+    h1 { margin: 0 0 8px 0; font-size: 24px; }
+    .notice { margin: 12px 0 16px 0; padding: 10px 12px; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px; color: #1e1b4b; }
+    .layout { display: grid; grid-template-columns: 320px 1fr; gap: 16px; align-items: start; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+    .panel { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 12px; }
+    .panel h3 { margin: 0 0 6px 0; font-size: 16px; }
+    .status { padding: 10px 12px; border-radius: 8px; background: #f1f5f9; border: 1px solid #e2e8f0; min-height: 44px; }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+    .summary .tile { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; background: #f8fafc; }
+    .summary .tile .label { color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .summary .tile .value { font-size: 18px; font-weight: 600; }
+    .legend { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: #fdfdfd; }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 4px; border: 1px solid #cbd5e1; }
+    .hint { font-size: 13px; color: #475569; }
+    .map-wrap { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    #map { width: 100%; height: 82vh; min-height: 520px; }
+    .leaflet-control-layers-expanded { max-height: 320px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h1>Behavior Model Map Explorer</h1>
+  <div class="notice">
+    Serve this folder with <code>python -m http.server 8000</code> from <code>training_ops/behavior_model</code>
+    so the browser can fetch the generated JSON files in <code>output/</code>. Toggle overlays from the map control; click shapes for details.
+  </div>
+
+  <div class="layout">
+    <aside class="panel">
+      <div class="status" id="status">Loading data…</div>
+      <div>
+        <h3>Data Snapshot</h3>
+        <div class="summary" id="summary"></div>
+      </div>
+      <div>
+        <h3>Legend</h3>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="hint">Hold Shift and drag to zoom box. Layers can be toggled or reordered via the control on the map.</div>
+    </aside>
+
+    <main class="map-wrap">
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1j7kC2JbWg8wEciPYOcu8Dk7kPjFp3PsX2f1w3y8="
+    crossorigin=""
+  ></script>
+  <script>
+    const statusEl = document.getElementById('status');
+    const summaryEl = document.getElementById('summary');
+    const legendEl = document.getElementById('legend');
+
+    const map = L.map('map', { preferCanvas: true, worldCopyJump: true }).setView([31.8, 35], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const layers = {
+      paths: L.layerGroup(),
+      turns: L.layerGroup(),
+      holdings: L.layerGroup(),
+      sids: L.layerGroup(),
+      stars: L.layerGroup(),
+      regions: L.layerGroup(),
+    };
+    Object.values(layers).forEach(layer => layer.addTo(map));
+
+    const layerControl = L.control.layers(
+      null,
+      {
+        'Paths (library centroids)': layers.paths,
+        'Turns (sample locations)': layers.turns,
+        'Holdings (hotspots & radius)': layers.holdings,
+        'SIDs (centroid tracks)': layers.sids,
+        'STARs (centroid tracks)': layers.stars,
+        'Airspace semantics': layers.regions,
+      },
+      { collapsed: false, position: 'topright' }
+    ).addTo(map);
+
+    const bounds = L.latLngBounds([]);
+    const NM_TO_M = 1852;
+
+    init();
+
+    async function init() {
+      try {
+        statusEl.textContent = 'Loading libraries from output/...';
+        const [pathData, turnData, holdingData, verticalData, sidStarData, regionsData] = await Promise.all([
+          fetchJSON('path_library'),
+          fetchJSON('turn_library'),
+          fetchJSON('holding_library'),
+          fetchJSON('vertical_profiles'),
+          fetchJSON('sid_star_library'),
+          fetchJSON('airspace_semantics'),
+        ]);
+
+        drawPaths(pathData?.library || []);
+        drawTurns(turnData?.library || []);
+        drawHoldings(holdingData?.library || []);
+        drawSidStar(sidStarData?.sid || [], layers.sids, 'SID');
+        drawSidStar(sidStarData?.star || [], layers.stars, 'STAR', 50);
+        drawRegions(regionsData?.regions || {});
+        updateSummary({
+          paths: pathData?.library?.length || 0,
+          turns: turnData?.library?.length || 0,
+          holdings: holdingData?.library?.length || 0,
+          sids: sidStarData?.sid?.length || 0,
+          stars: sidStarData?.star?.length || 0,
+          regions: Object.keys(regionsData?.regions || {}).length,
+          profiles: Object.keys(verticalData?.profiles || {}).length,
+        });
+        renderLegend();
+        fitBounds();
+        statusEl.textContent = 'Loaded. Toggle overlays using the control on the map.';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = `Failed to load data: ${err.message}`;
+      }
+    }
+
+    async function fetchJSON(name) {
+      const res = await fetch(`../output/${name}.json`);
+      if (!res.ok) throw new Error(`HTTP ${res.status} for ${name}.json`);
+      return res.json();
+    }
+
+    function drawPaths(paths) {
+      layers.paths.clearLayers();
+      paths.forEach(path => {
+        const triples = normalizeTriples(path.centroid);
+        const latlngs = triples.map(([lat, lon]) => {
+          extendBounds(lat, lon);
+          return [lat, lon];
+        });
+        if (!latlngs.length) return;
+        const color = colorFromId(path.id);
+        const line = L.polyline(latlngs, { color, weight: 3, opacity: 0.7 });
+        line.bindPopup(
+          `<strong>Path ${path.id}</strong><br>` +
+          `Members: ${path.member_flights?.length || 0}<br>` +
+          `Length: ${path.path_length_nm?.toFixed?.(1) ?? '–'} nm<br>` +
+          `Confidence: ${(path.confidence ?? 0).toFixed(2)}`
+        );
+        layers.paths.addLayer(line);
+      });
+    }
+
+    function drawTurns(turns) {
+      layers.turns.clearLayers();
+      turns.forEach(turn => {
+        const color = colorFromId(turn.id, 20);
+        const group = L.layerGroup();
+        (turn.sample_locations || []).forEach((pt, idx) => {
+          if (!isFinite(pt.lat) || !isFinite(pt.lon)) return;
+          extendBounds(pt.lat, pt.lon);
+          const marker = L.circleMarker([pt.lat, pt.lon], {
+            radius: 4,
+            color,
+            fillColor: color,
+            fillOpacity: 0.6,
+            weight: 1
+          });
+          marker.bindPopup(
+            `<strong>Turn ${turn.id}</strong><br>` +
+            `Sample #${idx + 1}<br>` +
+            `Alt: ${pt.alt?.toFixed?.(0) ?? '–'} ft<br>` +
+            `Confidence: ${(turn.confidence ?? 0).toFixed(2)}`
+          );
+          group.addLayer(marker);
+        });
+        layers.turns.addLayer(group);
+      });
+    }
+
+    function drawHoldings(holdings) {
+      layers.holdings.clearLayers();
+      holdings.forEach(holding => {
+        const color = colorFromId(holding.id, 120);
+        (holding.hotspots || []).forEach((spot, idx) => {
+          if (!isFinite(spot.lat) || !isFinite(spot.lon)) return;
+          extendBounds(spot.lat, spot.lon);
+          const radiusMeters = (holding.center?.radius_nm || 1) * NM_TO_M;
+          const circle = L.circle([spot.lat, spot.lon], {
+            radius: radiusMeters,
+            color,
+            weight: 2,
+            fillColor: color,
+            fillOpacity: 0.08
+          });
+          circle.bindPopup(
+            `<strong>Holding ${holding.id}</strong><br>` +
+            `Hotspot #${idx + 1}<br>` +
+            `Radius: ${(holding.center?.radius_nm ?? 0).toFixed(2)} nm<br>` +
+            `Speed: ${(holding.center?.speed ?? 0).toFixed(0)} kt<br>` +
+            `Alt: ${(holding.center?.alt ?? 0).toFixed(0)} ft<br>` +
+            `Members: ${holding.member_count ?? 0}<br>` +
+            `Confidence: ${(holding.confidence ?? 0).toFixed(2)}`
+          );
+          layers.holdings.addLayer(circle);
+        });
+      });
+    }
+
+    function drawSidStar(list, layer, label, hueOffset = 0) {
+      layer.clearLayers();
+      list.forEach(entry => {
+        const triples = normalizeTriples(entry.centroid);
+        const latlngs = triples.map(([lat, lon]) => {
+          extendBounds(lat, lon);
+          return [lat, lon];
+        });
+        if (!latlngs.length) return;
+        const color = colorFromId(entry.id, hueOffset);
+        const line = L.polyline(latlngs, { color, weight: 2.5, opacity: 0.8, dashArray: label === 'STAR' ? '6,4' : undefined });
+        line.bindPopup(
+          `<strong>${label} ${entry.id}</strong><br>` +
+          `Members: ${entry.member_flights?.length || 0}<br>` +
+          `Confidence: ${(entry.confidence ?? 0).toFixed(2)}`
+        );
+        layer.addLayer(line);
+      });
+    }
+
+    function drawRegions(regions) {
+      layers.regions.clearLayers();
+      Object.entries(regions).forEach(([name, region], idx) => {
+        const color = colorFromId(idx, 210);
+        const polygon = Array.isArray(region.polygon) ? region.polygon : [];
+        const latlngs = polygon.map(([lat, lon]) => {
+          extendBounds(lat, lon);
+          return [lat, lon];
+        });
+        if (!latlngs.length) return;
+        const poly = L.polygon(latlngs, { color, weight: 2, fillColor: color, fillOpacity: 0.1 });
+        poly.bindPopup(`<strong>${name}</strong><br>${region.description || 'No description'}`);
+        layers.regions.addLayer(poly);
+      });
+    }
+
+    function normalizeTriples(raw) {
+      if (!raw) return [];
+      if (Array.isArray(raw) && Array.isArray(raw[0])) {
+        return raw.map(triple => [Number(triple[0]), Number(triple[1]), Number(triple[2])]);
+      }
+      const triples = [];
+      for (let i = 0; i < raw.length; i += 3) {
+        const lat = Number(raw[i]);
+        const lon = Number(raw[i + 1]);
+        const alt = Number(raw[i + 2]);
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          triples.push([lat, lon, alt]);
+        }
+      }
+      return triples;
+    }
+
+    function extendBounds(lat, lon) {
+      if (Number.isFinite(lat) && Number.isFinite(lon)) bounds.extend([lat, lon]);
+    }
+
+    function fitBounds() {
+      if (bounds.isValid()) {
+        map.fitBounds(bounds.pad(0.05));
+      }
+    }
+
+    function colorFromId(value, offset = 0) {
+      const hash = Array.from(String(value)).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+      const hue = (hash * 37 + offset) % 360;
+      return `hsl(${hue}, 72%, 52%)`;
+    }
+
+    function updateSummary(stats) {
+      const rows = [
+        ['Paths', stats.paths],
+        ['Turns', stats.turns],
+        ['Holdings', stats.holdings],
+        ['SIDs', stats.sids],
+        ['STARs', stats.stars],
+        ['Regions', stats.regions],
+        ['Vertical profiles', stats.profiles],
+      ];
+      summaryEl.innerHTML = rows
+        .map(([label, value]) => `<div class="tile"><div class="label">${label}</div><div class="value">${value}</div></div>`)
+        .join('');
+    }
+
+    function renderLegend() {
+      legendEl.innerHTML = [
+        ['Paths', colorFromId(1)],
+        ['Turns', colorFromId(2, 20)],
+        ['Holdings', colorFromId(3, 120)],
+        ['SIDs', colorFromId(4)],
+        ['STARs (dashed)', colorFromId(5, 50)],
+        ['Regions', colorFromId(6, 210)],
+      ].map(([label, color]) => `
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:${color}"></span>
+          <span>${label}</span>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
+

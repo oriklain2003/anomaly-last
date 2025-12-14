@@ -1,0 +1,78 @@
+You are an expert UI/UX designer specializing in Data Science dashboards.
+
+I need you to design a clean, modern web interface for testing a **Multi-Layer Flight Anomaly Detection System**.
+
+### System Overview
+The system analyzes flight tracks using **Four Distinct Layers** of detection logic:
+1. **Rule Engine**: Basic deterministic checks (e.g., "Negative Altitude").
+2. **XGBoost**: A supervised Machine Learning model trained on historical anomalies.
+3. **Deep Dense**: An unsupervised Autoencoder that flags abnormal deviations based on reconstruction error.
+4. **Deep CNN**: A Convolutional Neural Network Autoencoder that analyzes spatial patterns and flags anomalies.
+
+### UI Requirements
+
+**1. Input Section**
+- A prominent search bar to enter a `flight_id`.
+- A "Analyze Flight" button.
+
+**2. Results Dashboard (Main View)**
+- A summary header showing the Flight ID and an overall "ANOMALY" or "NORMAL" badge.
+- **Four Cards (One for each layer)** displayed in a grid or list:
+    - **Card 1: Rule Engine**
+        - Status: Normal/Anomaly.
+        - List of triggers (e.g., "Negative Altitude").
+    - **Card 2: XGBoost Model**
+        - Probability Score (0.0 - 1.0).
+        - Status: Normal/Anomaly.
+    - **Card 3: Deep Dense Autoencoder**
+        - Reconstruction Error (Score) vs Threshold.
+        - Cluster ID.
+        - Severity Bar.
+    - **Card 4: Deep CNN Autoencoder**
+        - Reconstruction Error (Score) vs Threshold.
+        - Cluster ID.
+        - Severity Bar.
+
+### Technical Stack
+- The UI will consume a JSON API at `GET /analyze/{flight_id}`.
+- Response format (Example):
+  ```json
+  {
+    "layer_1_rules": {
+      "status": "NORMAL"
+    },
+    "layer_2_xgboost": {
+      "score": 0.12,
+      "threshold": 0.5,
+      "is_anomaly": false,
+      "status": "NORMAL"
+    },
+    "layer_3_deep_dense": {
+      "score": 0.045,
+      "threshold": 0.02,
+      "severity": 2.25,
+      "is_anomaly": true,
+      "status": "ANOMALY",
+      "cluster": 3
+    },
+    "layer_4_deep_cnn": {
+      "score": 0.01,
+      "threshold": 0.015,
+      "is_anomaly": false,
+      "status": "NORMAL",
+      "cluster": 3
+    },
+    "summary": {
+      "is_anomaly": true,
+      "triggers": ["DeepDense"],
+      "flight_id": "FL123",
+      "num_points": 150
+    }
+  }
+  ```
+
+### Output Format
+Please provide:
+1. A **Wireframe Description**.
+2. **React/Tailwind CSS Code** for the main Dashboard Component.
+3. Suggestions for color coding (Green for Normal, Red for Anomaly).

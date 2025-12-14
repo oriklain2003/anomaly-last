@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>ChatGPT with Image</h2>
+
+  <input id="msg" type="text" placeholder="Ask something..." />
+  <br><br>
+
+  <input id="img" type="file" accept="image/*" />
+  <br><br>
+
+  <button onclick="send()">Send</button>
+
+  <pre id="response"></pre>
+
+  <script>
+    async function send() {
+      const form = new FormData();
+      form.append("message", document.getElementById("msg").value);
+
+      const file = document.getElementById("img").files[0];
+      if (file) form.append("image", file);
+
+      const res = await fetch("http://localhost:789/chat", {
+        method: "POST",
+        body: form
+      });
+
+      const data = await res.json();
+      document.getElementById("response").innerText = data.answer;
+    }
+  </script>
+
+</body>
+</html>

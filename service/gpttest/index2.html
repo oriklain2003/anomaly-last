@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flight Anomaly Agent</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 16px;
+      background: #0b1020;
+      color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    #input-container {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    textarea {
+      flex: 1;
+      min-height: 80px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      background: #111623;
+      color: #f4f4f4;
+      resize: vertical;
+    }
+    button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 600;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    #response {
+      white-space: pre-wrap;
+      background: #111623;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      min-height: 80px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Flight Anomaly Agent</h1>
+
+  <div id="input-container">
+    <textarea id="message" placeholder="Ask about a flight, anomaly, path, etc..."></textarea>
+    <button id="send-btn" onclick="sendMessage()">Send</button>
+  </div>
+
+  <div id="response">Response will appear here...</div>
+
+  <script>
+    const API_URL = "http://localhost:456/chat"; // change if backend is elsewhere
+
+    async function sendMessage() {
+      const btn = document.getElementById("send-btn");
+      const msgEl = document.getElementById("message");
+      const respEl = document.getElementById("response");
+
+      const text = msgEl.value.trim();
+      if (!text) return;
+
+      btn.disabled = true;
+      btn.textContent = "Thinking...";
+      respEl.textContent = "Thinking with tools (DB + Web)...";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: text }),
+        });
+
+        if (!res.ok) {
+          respEl.textContent = "Error: " + res.status + " " + res.statusText;
+        } else {
+          const data = await res.json();
+          respEl.textContent = data.answer || "(empty answer)";
+        }
+      } catch (err) {
+        respEl.textContent = "Request error: " + err;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Send";
+      }
+    }
+
+    // Send on Ctrl+Enter
+    document.getElementById("message").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>

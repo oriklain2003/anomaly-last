@@ -1,0 +1,15 @@
+pandas
+numpy
+scikit-learn
+requests
+fr24sdk
+folium
+joblib
+xgboost
+torch
+fastapi
+uvicorn
+pydantic
+hdbscan
+staticmap
+openai

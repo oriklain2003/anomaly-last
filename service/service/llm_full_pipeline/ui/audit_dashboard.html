@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anomaly Pipeline Audit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .leaflet-container { background: #f0f0f0; }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col bg-gray-50 overflow-hidden">
+
+    <!-- Top Bar -->
+    <header class="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-4">
+            <h1 class="text-xl font-bold text-gray-800">✈️ Anomaly Audit</h1>
+            <select id="reportSelect" class="border rounded px-2 py-1 text-sm bg-gray-50">
+                <option>Loading reports...</option>
+            </select>
+            <button id="refreshBtn" class="text-sm text-blue-600 hover:underline">Refresh</button>
+        </div>
+        <div id="summaryMetrics" class="flex gap-4 text-sm text-gray-600">
+            <!-- Metrics injected here -->
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Sidebar: Flight List -->
+        <aside class="w-80 bg-white border-r border-gray-200 flex flex-col shrink-0">
+            <div class="p-3 border-b border-gray-100">
+                <input type="text" id="searchFlights" placeholder="Search Flight ID..." class="w-full border rounded px-2 py-1 text-sm">
+                <div class="flex gap-2 mt-2 text-xs">
+                    <button class="filter-btn px-2 py-0.5 rounded bg-blue-100 text-blue-800" data-cat="all">All</button>
+                    <button class="filter-btn px-2 py-0.5 rounded bg-gray-100" data-cat="anomaly">Anom</button>
+                    <button class="filter-btn px-2 py-0.5 rounded bg-gray-100" data-cat="normal">Norm</button>
+                    <button class="filter-btn px-2 py-0.5 rounded bg-gray-100" data-cat="glitch">Glitch</button>
+                    <button class="filter-btn px-2 py-0.5 rounded bg-gray-100" data-cat="borderline">Border</button>
+                    <button class="filter-btn px-2 py-0.5 rounded bg-purple-100 text-purple-800" data-cat="ad-hoc">Ad-hoc Evaluation</button>
+                </div>
+                <!-- Visual separator for Ad-hoc if implicit, but categories handle it -->
+            </div>
+            <div id="flightList" class="flex-1 overflow-y-auto p-2 space-y-1">
+                <!-- List Items -->
+                <div class="text-center text-gray-400 mt-10">Select a report to load flights</div>
+            </div>
+        </aside>
+
+        <!-- Right Panel: Detail View -->
+        <main class="flex-1 flex flex-col overflow-hidden relative">
+            <div id="emptyState" class="absolute inset-0 flex items-center justify-center text-gray-400 z-10 bg-gray-50">
+                Select a flight to view details
+            </div>
+
+            <div id="flightDetail" class="flex flex-col h-full hidden">
+                <!-- Flight Header -->
+                <div class="bg-white border-b border-gray-200 px-4 py-2 flex justify-between items-center shadow-sm z-20">
+                    <div>
+                        <h2 id="detailFlightId" class="text-lg font-bold font-mono"></h2>
+                        <div class="flex gap-2 text-xs mt-0.5">
+                            <span id="detailCategory" class="px-1.5 py-0.5 rounded bg-gray-200 text-gray-700"></span>
+                            <span id="detailVerdict" class="px-1.5 py-0.5 rounded font-bold"></span>
+                        </div>
+                    </div>
+                    <div class="text-right text-xs">
+                        <div id="detailTime"></div>
+                        <div id="detailPoints"></div>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div id="map" class="h-2/5 bg-gray-200 w-full z-0"></div>
+
+                <!-- Comparison / Tabs -->
+                <div class="flex-1 bg-white flex flex-col overflow-hidden">
+                    <div class="flex border-b border-gray-200 px-4 gap-6 text-sm font-medium text-gray-500">
+                        <button class="tab-btn py-2 hover:text-blue-600 tab-active" data-tab="overview">Overview</button>
+                        <button class="tab-btn py-2 hover:text-blue-600" data-tab="filter">Filtering</button>
+                        <button class="tab-btn py-2 hover:text-blue-600" data-tab="rules">Rules</button>
+                        <button class="tab-btn py-2 hover:text-blue-600" data-tab="llm">LLM Reasoning</button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
+                        
+                        <!-- Tab: Overview -->
+                        <div id="tab-overview" class="tab-content space-y-4">
+                            <div class="grid grid-cols-4 gap-4">
+                                <div class="bg-white p-3 rounded border shadow-sm text-center">
+                                    <div class="text-xs text-gray-500 uppercase">Baseline</div>
+                                    <div id="resBaseline" class="font-bold mt-1 text-lg">?</div>
+                                </div>
+                                <div class="bg-white p-3 rounded border shadow-sm text-center">
+                                    <div class="text-xs text-gray-500 uppercase">Filter Only</div>
+                                    <div id="resFilter" class="font-bold mt-1 text-lg">?</div>
+                                </div>
+                                <div class="bg-white p-3 rounded border shadow-sm text-center">
+                                    <div class="text-xs text-gray-500 uppercase">LLM Only</div>
+                                    <div id="resLlm" class="font-bold mt-1 text-lg">?</div>
+                                </div>
+                                <div class="bg-white p-3 rounded border shadow-sm text-center border-blue-200 bg-blue-50">
+                                    <div class="text-xs text-blue-600 uppercase font-bold">Full Pipeline</div>
+                                    <div id="resFull" class="font-bold mt-1 text-lg">?</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-4 rounded border shadow-sm">
+                                <h3 class="font-bold text-gray-700 mb-2">Pipeline Logic Trace</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Input Points:</span>
+                                        <span id="tracePoints" class="font-mono"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Signal Flags:</span>
+                                        <span id="traceFlags" class="font-mono text-red-600"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Triggered Rules:</span>
+                                        <span id="traceRules" class="font-mono text-orange-600"></span>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-t">
+                                        <div class="font-semibold">LLM Final Thought:</div>
+                                        <p id="traceLlmReason" class="text-gray-600 italic mt-1"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab: Filtering -->
+                        <div id="tab-filter" class="tab-content hidden space-y-4">
+                            <div class="bg-white p-4 rounded border shadow-sm">
+                                <h3 class="font-bold mb-2">Filter Actions</h3>
+                                <pre id="jsonFilter" class="text-xs bg-gray-100 p-2 rounded overflow-x-auto"></pre>
+                            </div>
+                        </div>
+
+                        <!-- Tab: Rules -->
+                        <div id="tab-rules" class="tab-content hidden space-y-4">
+                            <div class="bg-white p-4 rounded border shadow-sm">
+                                <h3 class="font-bold mb-2">Rule Engine Findings</h3>
+                                <pre id="jsonRules" class="text-xs bg-gray-100 p-2 rounded overflow-x-auto"></pre>
+                            </div>
+                        </div>
+
+                        <!-- Tab: LLM -->
+                        <div id="tab-llm" class="tab-content hidden space-y-4">
+                            <div class="bg-white p-4 rounded border shadow-sm">
+                                <h3 class="font-bold mb-2">LLM Analysis</h3>
+                                <div class="mb-4">
+                                    <span class="text-sm font-semibold">Logical Score:</span>
+                                    <span id="llmScore" class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-sm font-bold"></span>
+                                </div>
+                                <div class="mb-4">
+                                    <span class="text-sm font-semibold">Explanation:</span>
+                                    <p id="llmExplanation" class="text-sm text-gray-700 mt-1 leading-relaxed border-l-4 border-blue-400 pl-3 bg-blue-50 py-2 pr-2"></p>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-semibold">Suggested Corrections:</span>
+                                    <ul id="llmCorrections" class="list-disc list-inside text-sm text-gray-600 mt-1"></ul>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded border shadow-sm">
+                                <h3 class="font-bold mb-2">Raw JSON</h3>
+                                <pre id="jsonLlm" class="text-xs bg-gray-100 p-2 rounded overflow-x-auto"></pre>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+    // State
+    let currentReport = null;
+    let currentFlight = null;
+    let map = null;
+    let polyline = null;
+    let flightLayer = null;
+
+    // DOM Elements
+    const els = {
+        reportSelect: document.getElementById('reportSelect'),
+        refreshBtn: document.getElementById('refreshBtn'),
+        flightList: document.getElementById('flightList'),
+        searchFlights: document.getElementById('searchFlights'),
+        filterBtns: document.querySelectorAll('.filter-btn'),
+        flightDetail: document.getElementById('flightDetail'),
+        emptyState: document.getElementById('emptyState'),
+        tabBtns: document.querySelectorAll('.tab-btn'),
+        tabContents: document.querySelectorAll('.tab-content'),
+        // Detail Fields
+        detailFlightId: document.getElementById('detailFlightId'),
+        detailCategory: document.getElementById('detailCategory'),
+        detailVerdict: document.getElementById('detailVerdict'),
+        detailTime: document.getElementById('detailTime'),
+        detailPoints: document.getElementById('detailPoints'),
+        // Overview
+        resBaseline: document.getElementById('resBaseline'),
+        resFilter: document.getElementById('resFilter'),
+        resLlm: document.getElementById('resLlm'),
+        resFull: document.getElementById('resFull'),
+        tracePoints: document.getElementById('tracePoints'),
+        traceFlags: document.getElementById('traceFlags'),
+        traceRules: document.getElementById('traceRules'),
+        traceLlmReason: document.getElementById('traceLlmReason'),
+        // JSONs
+        jsonFilter: document.getElementById('jsonFilter'),
+        jsonRules: document.getElementById('jsonRules'),
+        jsonLlm: document.getElementById('jsonLlm'),
+        // LLM specific
+        llmScore: document.getElementById('llmScore'),
+        llmExplanation: document.getElementById('llmExplanation'),
+        llmCorrections: document.getElementById('llmCorrections'),
+        summaryMetrics: document.getElementById('summaryMetrics'),
+    };
+
+    // Init
+    async function init() {
+        initMap();
+        await loadReportList();
+        setupListeners();
+    }
+
+    function initMap() {
+        map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+    }
+
+    async function loadReportList() {
+        try {
+            const res = await fetch('/api/reports');
+            const files = await res.json();
+            els.reportSelect.innerHTML = '';
+            
+            if (files.length === 0) {
+                const opt = document.createElement('option');
+                opt.text = "No reports found";
+                els.reportSelect.add(opt);
+                return;
+            }
+
+            files.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.text = f;
+                els.reportSelect.add(opt);
+            });
+
+            // Load first report automatically
+            loadReport(files[0]);
+        } catch (e) {
+            console.error("Failed to load reports", e);
+            els.reportSelect.innerHTML = '<option>Error loading reports</option>';
+        }
+    }
+
+    async function loadReport(filename) {
+        if (!filename) return;
+        try {
+            const res = await fetch(`/reports/${filename}`);
+            currentReport = await res.json();
+            renderMetrics(currentReport.metrics_by_layer);
+            renderFlightList(currentReport.records);
+        } catch (e) {
+            console.error("Failed to load report content", e);
+            alert("Error loading report: " + e.message);
+        }
+    }
+
+    function renderMetrics(metrics) {
+        if (!metrics) return;
+        const full = metrics.full_pipeline || {};
+        els.summaryMetrics.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-gray-800">Full Pipeline:</span>
+                <span>Acc: ${(full.accuracy * 100).toFixed(1)}%</span>
+                <span>Prec: ${(full.precision * 100).toFixed(1)}%</span>
+                <span>Rec: ${(full.recall * 100).toFixed(1)}%</span>
+            </div>
+        `;
+    }
+
+    function renderFlightList(records, filterText = '', category = 'all') {
+        els.flightList.innerHTML = '';
+        
+        const filtered = records.filter(r => {
+            const matchText = r.flight_id.toLowerCase().includes(filterText.toLowerCase());
+            const matchCat = category === 'all' || r.category === category;
+            return matchText && matchCat;
+        });
+
+        if (filtered.length === 0) {
+            els.flightList.innerHTML = '<div class="p-4 text-center text-gray-400 text-sm">No flights found</div>';
+            return;
+        }
+
+        filtered.forEach(r => {
+            const el = document.createElement('div');
+            // Determine if verdict matches expectation
+            const isAnomalyTruth = r.category === 'anomaly';
+            const isMatch = r.final_decision === isAnomalyTruth;
+            
+            // Color coding: Green for match, Red for mismatch
+            // We ignore the 'yellow' for glitch/borderline to be stricter as requested
+            let borderClass = isMatch ? 'border-green-200 bg-white' : 'border-red-200 bg-red-50';
+
+            el.className = `p-2 border rounded cursor-pointer hover:shadow-md transition-shadow text-sm mb-1 ${borderClass}`;
+            el.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="font-bold font-mono">${r.flight_id}</span>
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-gray-200 text-gray-600 uppercase">${r.category.substring(0,4)}</span>
+                </div>
+                <div class="flex justify-between items-center mt-1">
+                    <span class="text-xs text-gray-500">Should: ${r.category.toUpperCase()}</span>
+                    <span class="font-bold text-xs ${r.final_decision ? 'text-red-600' : 'text-green-600'}">
+                        ${r.final_decision ? 'ANOMALY' : 'NORMAL'}
+                    </span>
+                </div>
+            `;
+            el.onclick = () => selectFlight(r);
+            els.flightList.appendChild(el);
+        });
+    }
+
+    function selectFlight(r) {
+        currentFlight = r;
+        els.emptyState.classList.add('hidden');
+        els.flightDetail.classList.remove('hidden');
+
+        // Header
+        els.detailFlightId.innerText = r.flight_id;
+        els.detailCategory.innerText = r.category.toUpperCase();
+        els.detailVerdict.innerText = r.final_decision ? "ANOMALY" : "NORMAL";
+        els.detailVerdict.className = `px-1.5 py-0.5 rounded font-bold text-white ${r.final_decision ? 'bg-red-600' : 'bg-green-600'}`;
+        els.detailTime.innerText = `${(r.time_taken * 1000).toFixed(0)}ms`;
+        els.detailPoints.innerText = `${r.filter_actions.original_points || '?'} pts`;
+
+        // Map
+        if (flightLayer) map.removeLayer(flightLayer);
+        if (r.path && r.path.length > 0) {
+            flightLayer = L.polyline(r.path, {color: 'blue', weight: 3}).addTo(map);
+            map.fitBounds(flightLayer.getBounds(), {padding: [50, 50]});
+        }
+
+        // Comparison
+        updateResultBox(els.resBaseline, r.baseline_is_anomaly);
+        updateResultBox(els.resFilter, r.filtering_only_is_anomaly);
+        updateResultBox(els.resLlm, r.llm_only_is_anomaly);
+        updateResultBox(els.resFull, r.full_pipeline_is_anomaly);
+
+        // Trace
+        els.tracePoints.innerText = `${r.filter_actions.filtered_points}/${r.filter_actions.original_points} (${r.filter_actions.flags?.duplicates_removed || 0} dups removed)`;
+        
+        const flags = r.filter_actions.flags || {};
+        const flagSummary = [];
+        if (flags.thin_segments?.length) flagSummary.push(`${flags.thin_segments.length} thin`);
+        if (flags.signal_losses?.length) flagSummary.push(`${flags.signal_losses.length} loss`);
+        if (flags.impossible_jumps?.length) flagSummary.push(`${flags.impossible_jumps.length} jumps`);
+        if (flags.heading_flips?.length) flagSummary.push(`${flags.heading_flips.length} flips`);
+        els.traceFlags.innerText = flagSummary.length ? flagSummary.join(', ') : 'Clean';
+
+        els.traceRules.innerText = (r.rule_findings.triggers || []).join(', ') || 'None';
+        
+        els.traceLlmReason.innerText = r.llm_reasoning.explanation || 'No reasoning available.';
+
+        // JSON Tabs
+        els.jsonFilter.innerText = JSON.stringify(r.filter_actions, null, 2);
+        els.jsonRules.innerText = JSON.stringify(r.rule_findings, null, 2);
+        els.jsonLlm.innerText = JSON.stringify(r.llm_reasoning, null, 2);
+
+        // LLM Specific
+        els.llmScore.innerText = r.llm_reasoning.score || 0;
+        els.llmExplanation.innerText = r.llm_reasoning.explanation || '';
+        
+        els.llmCorrections.innerHTML = '';
+        const corrs = r.llm_reasoning.corrections || [];
+        if (corrs.length) {
+            corrs.forEach(c => {
+                const li = document.createElement('li');
+                li.innerText = c;
+                els.llmCorrections.appendChild(li);
+            });
+        } else {
+            els.llmCorrections.innerHTML = '<li class="text-gray-400 italic">No corrections suggested</li>';
+        }
+
+        // Force map resize due to hidden container
+        setTimeout(() => map.invalidateSize(), 100);
+    }
+
+    function updateResultBox(el, isAnomaly) {
+        el.innerText = isAnomaly ? "ANOMALY" : "NORMAL";
+        el.className = `font-bold mt-1 text-lg ${isAnomaly ? 'text-red-600' : 'text-green-600'}`;
+    }
+
+    function setupListeners() {
+        els.reportSelect.onchange = (e) => loadReport(e.target.value);
+        els.refreshBtn.onclick = loadReportList;
+
+        els.searchFlights.oninput = (e) => {
+            renderFlightList(currentReport.records, e.target.value, getActiveCategory());
+        };
+
+        els.filterBtns.forEach(btn => {
+            btn.onclick = () => {
+                // Toggle active style
+                els.filterBtns.forEach(b => {
+                    b.classList.remove('bg-blue-100', 'text-blue-800');
+                    b.classList.add('bg-gray-100');
+                });
+                btn.classList.remove('bg-gray-100');
+                btn.classList.add('bg-blue-100', 'text-blue-800');
+                
+                renderFlightList(currentReport.records, els.searchFlights.value, btn.dataset.cat);
+            }
+        });
+
+        els.tabBtns.forEach(btn => {
+            btn.onclick = () => {
+                // Tabs
+                els.tabBtns.forEach(b => b.classList.remove('tab-active'));
+                btn.classList.add('tab-active');
+                
+                // Content
+                els.tabContents.forEach(c => c.classList.add('hidden'));
+                document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
+            }
+        });
+    }
+
+    function getActiveCategory() {
+        const active = document.querySelector('.filter-btn.bg-blue-100');
+        return active ? active.dataset.cat : 'all';
+    }
+
+    init();
+
+</script>
+</body>
+</html>

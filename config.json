@@ -1,0 +1,27 @@
+{
+  "api_token": "019a9d54-678a-73da-a927-1f7a60b27a8f|xouEuixtJFLIlwNKajdW0mFjV4sguJsf5eByvIYTde7f4b26",
+  "base_url": "https://fr24api.flightradar24.com/api",
+  "bounds": {
+    "north": 34.597042,
+    "south": 28.536275,
+    "west": 32.299805,
+    "east": 37.397461
+  },
+  "database": {
+    "path": "flight_tracks_new.db",
+    "table": "flight_tracks",
+    "index": "idx_flight_time"
+  },
+  "time": {
+    "days_back": 4,
+    "window_span_seconds": 21600,
+    "scan_interval_seconds": 900
+  },
+  "pacing": {
+    "scan_sleep_seconds": 5,
+    "track_sleep_seconds": 5,
+    "retry_sleep_seconds": 10,
+    "batch_size": 20
+  }
+}
+

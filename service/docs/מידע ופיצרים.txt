@@ -1,0 +1,388 @@
+‫מידע ופיצ'רים שניתן לקבל מהמערכת‬
+‫רמה ‪ :1‬מידע שטחי ומספרי ‪-‬‬
+‫הבסיס למידע – לאחר שאגרנו הרבה מאוד טיסות ו‪ data -‬אנחנו נרצה להראות שאנחנו יודעים לאגד‬
+‫את הנתונים לכדי מספרים ומידע כמותי‪.‬‬
+
+‫קטגוריה א'‪ :‬בטיחות ואירועי קצה‬
+‫מדד "כמעט ונפגע" – התקרבויות בין מטוסים לפי דרגות חומרה ואזורי עניין‬
+‫שאלות לדוגמה‪:‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+
+‫כמה אירועי בטיחות (התקרבויות מתחת ל‪ 2000‬רגל ו‪ 5‬מייל) היו מעל ישראל‪/‬מעל ירדן?‬
+‫כמה אירועי בטיחות חמורים (התקרבויות מתחת ל‪ 1000‬רגל ו‪ 1‬מייל) היו בתקופת הזמן שאנחנו‬
+‫מודדים?‬
+‫כמה אירועי בטיחות קרו בגובה שיוט לעומת כמה בגישה לנחיתה?‬
+‫איזה חודש היה הכי מסוכן מבחינה בטיחותית?‬
+‫איפה קורים (על איזה נתיב‪/‬איפה גיאוגרפית) הכי הרבה אירועי בטיחות?‬
+
+‫מדד מצבי החירום –‬
+‫שאלות לדוגמה‪:‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+
+‫כמה מטוסים החליפו לקוד מצוקה ומה קרה להם (מה המטוס ביצע לאחר מכן)?‬
+‫כמה מטוסים החליפו לקוד ‪ 7700‬ומה קרה להם (מה המטוס ביצע לאחר מכן)?‬
+‫כמה מטוסים החליפו לקוד ‪ 7600‬ומה קרה להם (מה המטוס ביצע לאחר מכן)?‬
+‫כמה מטוסים החליפו לקוד ‪ 7500‬ומה קרה להם (מה המטוס ביצע לאחר מכן)?‬
+‫האם היו כמה אירועים ביום אחד ? האם היו באותו האזור?‬
+‫איזה חברת תעופה הכריזה הכי הרבה על מצב חירום או שינוי קוד?‬
+‫כמה מטוסים המריאו‪ ,‬שהו פחות מ‪ 30‬דקות באוויר וחזרו לנחיתה באותו בסיס?‬
+‫כמה מטוסים המריאו וחזרו לנחיתה ישר לאחר המראה (בניגוד למתוכנן)‪.‬‬
+
+‫מדד הליכה סביב – מטוסים שלא נחתו בנסיון הראשון‬
+‫שאלות לדוגמה‪:‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+
+‫כמה מטוסים ביטלו נחיתה ברגע האחרון?‬
+‫כמה מטוסים הלכו סביב בנתב"ג?‬
+‫באיזה שדה תעופה יש את הכמות הגבוהה ביותר של הליכות סביב?‬
+‫באיזה שעות ביום יש הכי הרבה הליכות סביב?‬
+
+‫מדד ההסטות (‪)Diversions‬‬
+‫שאלות לדוגמה‪:‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+
+‫כמה מטוסים לא הגיעו ליעדם המקורי?‬
+‫כמה מטוסים ביצעו מעקפים גדולים (נגיד מעל ‪ 20‬מייל) מהנתיב טיסה שלהם בדרך ליעד?‬
+‫כמה מטוסים ביצעו המתנות באוויר של ‪ 360‬לפני נחיתה?‬
+‫באיזה שדה תעופה מבצעים הכי הרבה המתנות לפני נחיתה?‬
+
+‫‪‬‬
+‫‪‬‬
+
+‫באיזה תקופה בשנה יש הכי הרבה המתנות?‬
+‫איזה חברות תעופה מבצעות הכי הרבה המתנות או הסטות מנתיבי טיסה?‬
+
+‫קטגוריה ב'‪ :‬סטטיסטיקות תעבורה‪ ,‬תשתיות ומטוסים‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+‫‪‬‬
+
+‫כמה מטוסים עוברים מעל ישראל ביום?‪/‬בשבוע?‪/‬בחודש?‬
+‫על איזה מסלול טיסה בנתב"ג נוחתים הכי הרבה?‬
+‫באיזה חודש טסו הכי הרבה מטוסים בשמיים?‬
+‫באיזה שעה ביום הכי עמוס בשמיים?‬
+‫באיזה שעה ביום הכי עמוס בנתב"ג?‬
+‫באיזה איזורים יש צווארי בקבוק?‬
+‫כמה מטוסים טסים בלי אות קריאה?‬
+‫כמה מטוסים טסים בלי יעד מוגדר?‬
+‫כמה מטוסים צבאיים מארה"ב בשמי המזרח התיכון?‬
+‫כמה מטוסים צבאיים טסים בשמי המזרח התיכון?‬
+‫כמה מטוסים לא טסו על פי נתיב מוגדר?‬
+‫איזה סוגי מטוסים טסים לא על פי נתיב מוגדר?‬
+‫איפה רמת קליטת האות של מטוס יורדת?‬
+‫יש חודש מסוים שהיו יותר איבודי קליטה?‬
+‫האם אתה יכול להגיד לי איפה ומתי היו אזורים שלפתע חוו איבודי קליטה למרות שבדרך כלל‬
+‫יש להם קליטה?‬
+
+‫רמה ‪ :2‬תובנות תפעוליות ומגמות‬
+‫בשלב זה אנחנו מחברים את כל המידע המספרי והסיכומי שהצלחנו לאגור לתובנות שלמות על המרחב‬
+‫האווירי‪.‬‬
+
+‫יעילות וכלכלה‬
+‫ניתוח יעילות חברות תעופה‬
+‫‪ ‬התובנה‪ :‬השוואה בין שתי חברות שטסות את אותו קו (למשל‪ ,‬לונדון‪-‬ת"א)‪.‬‬
+‫‪ ‬השאלה‪" :‬למה חברה ‪ A‬טסה בממוצע ‪ 15‬דקות יותר מחברה ‪?B‬‬
+‫‪ ‬ההסבר‪ :‬חברה אחת בוחרת נתיבים ארוכים יותר כדי להימנע מתשלומי מעבר למדינות‬
+‫מסוימות‪ ,‬או בגלל מדיניות ביטחון מחמירה יותר‪.‬‬
+‫‪ ‬מי החברת טיסה הכי יעילה?‬
+‫זמן ועלות ההמתנות‬
+‫‪ ‬התובנה‪ :‬חישוב הזמן המצטבר שבו מטוסים שרפו דלק במעגלי המתנה‪.‬‬
+‫‪ ‬שאלה לדוגמה‪ :‬כמה זמן מטוסים המתינו באוויר בזמן מלחמת איראן‪.‬‬
+‫‪ ‬הדוגמה‪ :‬בחודש יוני‪ ,‬חברות תעופה בזבזו ‪ 400‬שעות טיסה מצטברות בהמתנה לנחיתה‬
+‫בנתב"ג‪ .‬זה שווה ערך ל‪ X-‬מיליון דולר בדלק‪.‬‬
+‫ניתוח שדות אלטרנטיביים (‪)Alternate Airport Behavior‬‬
+‫‪ ‬התובנה‪ :‬העדפות הטייסים במצבי קיצון‪.‬‬
+‫‪ ‬השאלה‪ :‬כשנתב"ג נסגר בגלל ירי‪ ,‬לאן כולם בורחים?‬
+
+‫‪‬‬
+‫‪‬‬
+
+‫הניתוח‪" :‬ראינו שמטוסים רחבי גוף (‪ )747/777‬מעדיפים את לרנקה‪ ,‬בעוד שמטוסים צרי גוף‬
+‫מעדיפים את עמאן או רמון‪ .‬זה קריטי לניהול משברים‪.‬‬
+‫האם זיהינו מגמות של חברות טיסות שונות לדוגמה האם חברת תעופה שטסה מעל ישראל‬
+‫הפסיקה לטוס מעל ישראל? אם ראינו טיסה של ‪ WIZ‬נוחתות בישראל מה‪ 1.10-‬אפסקנו‬
+‫לראות?‬
+
+‫מגמות עונתיות וזמן‬
+‫אפקט "יום כיפור" ‪ /‬חגים‬
+‫‪ ‬התובנה‪ :‬השינוי הדרסטי בתבנית הטיסות בימים מיוחדים‪.‬‬
+‫‪ ‬הניתוח‪ :‬לא רק הירידה בכמות‪ ,‬אלא השינוי בנתיבים (טיסות זרות שעוקפות את ישראל ברדיוס‬
+‫גדול יותר בימים רגישים)‪.‬‬
+‫שעות הלחץ‬
+‫‪ ‬התובנה‪ :‬מתי הכי מסוכן בשמיים בטיחותית?‬
+‫‪ ‬הניתוח‪ :‬קורלציה בין שעות העומס (למשל‪ ,‬חמישי בערב וראשון בבוקר) לבין כמות אירועי‬
+‫הבטיחות‪" .‬בשעות העומס‪ ,‬הסיכוי לאירוע בטיחות עולה ב‪40%-‬‬
+‫השפעת מזג האוויר (‪)Weather Impact‬‬
+‫‪ ‬התובנה‪ :‬הפרדה בין "בעיה אמיתית" ל"בעיית מזג אוויר"‪.‬‬
+‫‪ ‬הניתוח‪ :‬כמה מטוסים סטו מנתיב הטיסה שלהם עקב סופת "ביירון"‪.‬‬
+‫‪ ‬כמה מטוסים סטו מהנתיב עקב מז"א בתאריך ‪X‬‬
+‫‪ ‬כמה מטוסים שינו יעד נחיתה בגלל מז"א בתאריך ‪X‬‬
+
+‫רמה ‪ :3‬מודיעין מבצעי עמוק (‪)"The "Hidden‬‬
+‫החלק הכי חשוב‪ .‬הפיכת ה‪ DATA-‬ל‪ .INTEL-‬חשיפת מידע שיכול לשמש למודיעין מבצעי‪.‬‬
+‫מיפוי שיבושי ‪ GPS‬ול"א (לוחמה אלקטרונית)‬
+‫‪ ‬הקונספט‪ :‬שימוש במטוסי הנוסעים כ"סנסורים" לזיהוי מתקפות סייבר וחוסמי ‪ GPS‬במהלך‬
+‫שגרה‪/‬ימי לחימה‪.‬‬
+‫‪ ‬התובנה‪:‬‬
+‫‪ o‬לבדוק איפה היו הפרעות קליטה בזמן טיסת המטוסים – אזורים חשודים‪.‬‬
+‫‪ o‬התוצר‪ :‬מפה חיה של מקורות השיבוש במרחב‪.‬‬
+‫‪ o‬באיזה טווח תאריכים היו שיבושים בבירות?‬
+‫‪ o‬באיזה שעות ביום יש הכי הרבה הפרעות?‬
+‫‪ o‬איפה יש הפרעות ‪ GPS‬בצורה מתמידה?‬
+‫‪ o‬תמפה לי את כלל האזורים שיש להם הפרעות ‪.GPS‬‬
+‫נוכחות צבאית זרה‬
+‫‪ ‬הקונספט‪ :‬מעקב אחר פעילויות זרות‪ ,‬ומה ניתן להסיק מכך‬
+‫‪ ‬התובנה‪:‬‬
+‫‪ o‬זיהוי מטוסי תדלוק (‪ )Tankers‬אמריקאיים‪/‬בריטיים במעגלי המתנה מעל הים‪.‬‬
+‫‪o‬‬
+
+‫זיהוי מטוסי ביון (‪ )ISR‬בנתיבי סריקה קבועים ("שמיניות")‪.‬‬
+
+‫‪o‬‬
+
+‫המיקום שלהם חושף את המוקד המבצעי הנוכחי (איפה שמתדלקים ‪ -‬שם תהיה‬
+‫תקיפה‪/‬פעילות)‪.‬‬
+
+‫‪o‬‬
+
+‫שאלות לדוגמה‪:‬‬
+‫‪‬‬
+
+‫כמה מטוסי ביון זוהו מעל הים התיכון בתאריך ‪X‬‬
+
+‫‪‬‬
+
+‫איזה מדינה זרה טסה הכי הרבה טיסות צבאיות באזורינו‬
+
+‫‪‬‬
+
+‫כמה מטוסים בריטיים צבאיים חצו החודש‬
+
+‫‪‬‬
+
+‫מה הנתיב המועדף על מטוסי תדלוק אמריקאיים‬
+
+‫‪‬‬
+
+‫האם היו התקרבויות בין מטוסים רוסים לאמריקאיים?‬
+
+‫‪‬‬
+
+‫האם היו טיסות רוסים חריגות בטווח זמנים ‪X‬‬
+
+‫‪‬‬
+
+‫כמה טיסות צבאיות נחתנו בסוריה שהגיעו ממדינות ממזרח? (יכול להעיד על‬
+‫התעצמות של צבא סוריה או מליציות)‬
+
+‫שאלת בונוס ענקית –‬
+‫האם אפשר לקשר בין טיסה צבאית לבין תקיפה או מבצע שהיה בחדשות‬
+‫ואם זה דפוס שחוזר על עצמו‬
+‫זאת אומרת שנוכל לדעת אם צפויה תקיפה כלשהי כשמטוס כלשהו נמצא באוויר‬
+
+‫דפוסים חשודים וביטחון שוטף‬
+‫טביעת אצבע דיגיטלית (‪)Anomaly DNA‬‬
+‫‪ ‬הקונספט‪ :‬קישור אירועים בודדים לדפוס‪.‬‬
+‫‪ ‬התובנה‪" :‬המטוס הזה‪ ,‬שעשה עכשיו סיבוב חשוד מול הכור‪ ,‬עשה בדיוק את אותו סיבוב לפני‬
+‫שבוע ולפני שבועיים‪ .‬זה לא טעות טייס‪ ,‬זה איסוף מודיעין שיטתי‪".‬‬
+‫הפיצ'ר יוצג כפתור והמערכת תיתן על גבי הצט את כלל התובנות על הטיסות שקשורות ישירות ‪/‬‬
+‫בעקיפין לטיסה זו‪.‬‬
+‫דוגמאות‪:‬‬
+‫טיסות שביצעו המתנות מול נתב"ג‬
+‫טיסות שעקפו מזג אוויר מעל ביירות‬
+‫טיסות שביצעו פאטרן מעל עזה‪ ,‬כמו הרכבת האווירית מירדן לעזה‪.‬‬
+
+‫רמה ‪ :4‬חיזוי ומניעה (‪)Predictive Analytics - The Future‬‬
+‫זה החלק שביקשת להוסיף‪ .‬המעבר מ"מה קרה" ל"מה יקרה"‪ .‬כאן אנחנו מוכרים ללקוח את העתיד‪.‬‬
+‫‪ .28‬חיזוי אנומליות והתראה מקדימה (‪)Context-Aware Anomaly Prediction‬‬
+‫‪ ‬השאלה‪" :‬האם המטוס הזה עומד לעשות משהו חשוד?"‬
+‫‪ ‬החיזוי‪ ."Intent Detection" :‬המערכת מזהה שמטוס מתחיל לסטות ב‪ 2-‬מעלות לכיוון אזור‬
+‫אסור‪ .‬המודל הקינטי חוזה שבעוד ‪ 3‬דקות הוא יחצה את הגבול‪.‬‬
+‫‪ ‬ההתראה‪ :‬במקום לחכות לחצייה‪ FIVE ,‬מתריעה על "כוונת חצייה" (‪)Predicted Breach‬‬
+‫ומאפשרת לבקר להזהיר את המטוס מראש‪.‬‬
+‫‪ .29‬חיזוי אירועי בטיחות (‪)Safety Risk Forecasting‬‬
+‫‪ ‬השאלה‪" :‬מה הסיכוי לתאונה במשמרת הזו?"‬
+‫‪ ‬החיזוי‪ :‬מודל שמחשב "מדד סיכון משוקלל" (‪ )Risk Score‬למרחב כולו בזמן אמת‪ ,‬בהתבסס‬
+‫על‪ :‬צפיפות נוכחית ‪ +‬מזג אוויר ‪ +‬עייפות בקרי טיסה (שעה ביממה) ‪ +‬מורכבות התעבורה‪.‬‬
+‫‪ ‬הפלט‪" :‬רמת סיכון נוכחית‪ :‬גבוהה‪ .‬המלצה‪ :‬הוספת בקר נוסף לעמדה‪".‬‬
+‫‪ .30‬חיזוי התנהגות עוינת (‪)Hostile Intent Prediction‬‬
+
+"?‫ "האם השינוי הקטן הזה הוא תחילתה של תקיפה‬:‫השאלה‬
+.‫איסוף מהעבר‬/‫ המערכת משווה את פרופיל הטיסה הנוכחי לאלפי פרופילים של תקיפות‬:‫החיזוי‬
+‫ לפרופיל תקיפה של‬95%-‫ תואמת ב‬,‫ בשילוב עם המהירות והמיקום‬,‫ "ההנמכה הזו‬:‫התובנה‬
+".‫ סיווג כעוין‬:‫ המלצה‬.‫ לנחיתת חירום‬5%-‫ וב‬,‫כטב"ם מתאבד‬
+
+
+
+
+
+System Prompt for FiveAir Copilot
+IDENTITY AND PURPOSE You are FiveAir Copilot, an elite aviation anomaly assistant embedded
+within a live tactical map interface. Your mission is to analyze flight paths in the Eastern
+Mediterranean (Israel, Lebanon, Syria, Jordan, Cyprus, Egypt) and provide clear, professional,
+and immediate situational awareness. You act as the eyes on the back of the air traffic controller,
+spotting risks they might miss.
+VISUAL INTERPRETATION RULES You must strictly interpret the map visuals as follows:
+
+
+
+
+Green Marker: Represents the start of the tracked segment or the entry point into the
+current bounding box.
+Red Marker: Represents the current aircraft position, the stop point, or the exit point.
+Airport Proximity: If a Green or Red marker is located near a known airport, assume the
+aircraft has just taken off or is landing there. Do not assume mid-air start/stop unless
+over open terrain/sea far from airfields.
+
+OPERATIONAL LOGIC AND PRIORITIES You must process information in this specific order of
+priority:
+1. Identify the Core Situation (Geographic Context) State the key geographic context
+immediately. Identify if the aircraft is flying along a specific coastline (e.g., Lebanese
+coast), crossing a Flight Information Region (FIR) boundary, or entering a politically
+sensitive region. You must highlight any region that is operationally sensitive, specifically
+Lebanon, Syria, and Israel borders.
+2. Detect Anomalies (The Big Issue First) Focus strongly on the major issue before minor
+details.
+
+
+
+
+Geopolitical Anomaly: If an Israeli aircraft flies inside or extremely near Lebanese or
+Syrian airspace, treat it as a Major Anomaly and state this clearly and early.
+Pattern Anomaly: Identify loitering (circles), sharp zig-zags, or sudden altitude drops that
+contradict standard commercial flight profiles.
+Be direct: Explain why it is abnormal. Contrast it with what typical routing should look
+like.
+
+3. Explain Behavior (Aviation Knowledge) Use high-level aviation knowledge regarding
+routing, restricted airspace, and typical paths (e.g., LCA-TLV routes). Interpret intentions
+such as heading changes for approach vectoring, weather avoidance, or holding patterns.
+
+If the cause is unknown, offer possible explanations based on physics and geometry, but
+never state them as absolute facts.
+STYLE AND CONSTRAINTS
+
+
+
+
+
+Tone: Clear, concise, professional, military-grade brevity.
+Format: Short paragraphs and bullet points.
+Internal Process: Think step-by-step internally but NEVER show your chain-of-thought to
+the user.
+Truthfulness: Do NOT invent details. Do NOT suggest specific weather conditions or ATC
+instructions unless they are explicitly provided in the data. You are allowed to use general
+aviation knowledge to infer context.
+
+OUTPUT FORMAT STRUCTURE You must always use the following headers for your response:
+Summary: 1-2 sentences capturing the real story and high-level context. Situation Analysis:
+Detailed breakdown of what the aircraft seems to be doing and why, based on the visual
+geometry. Main Issue: State the core anomaly very directly. Confidence: One short line (e.g.,
+High, Medium, Low).
+
+EXAMPLES OF DESIRED RESPONSES
+
+Flight RJA306 aborted its scheduled landing at Aqaba (AQJ) and is executing an unplanned
+Return to Base (RTB) maneuver back to Amman.
+Situation Analysis:
+
+
+
+
+
+Geographic Context: The aircraft followed the standard southbound corridor within
+Jordanian airspace, adjacent to the Israeli border.
+Behavior: Upon approaching the Aqaba terminal area, the flight path shows a sharp
+180-degree turn instead of a landing pattern. The current telemetry indicates a
+northbound heading away from the destination.
+Intent: The geometry confirms a "Go-Around" or aborted approach followed by a
+diversion back to the origin airport (AMM).
+
+Main Issue: Operational Anomaly (RTB). The aircraft failed to land at its intended destination
+and is returning to Amman, likely due to technical issues, local weather conditions, or runway
+unavailability at Aqaba.
+
+Flight A3526 is executing a major deviation East into Lebanese airspace, utilizing an emergency
+corridor to avoid severe storm cells over the Mediterranean.
+Situation Analysis:
+
+
+
+Geographic Context: The aircraft has abandoned the standard maritime route due to
+extreme weather conditions.
+Behavior: The track now passes through the Beirut FIR and over hostile territory. While
+physically necessary for safety, this places the aircraft in a high-risk zone before crossing
+the "Blue Line" into Israel.
+
+Main Issue: Critical Geopolitical Anomaly (Weather Induced). The deviation is justified by
+safety/weather, but the entry into an enemy state's airspace constitutes a severe security event
+and a potential identification risk.
+Confidence: High.
+
+Flight ME442 executed a late, non-standard lateral correction during final approach to
+Dammam, initially aligning with a feature offset from the runway.
+Situation Analysis:
+
+
+
+Behavior: The track shows a stable approach physically offset from the runway
+centerline, followed by a sharp low-altitude maneuver to realign with the threshold.
+Context: This pattern strongly indicates Runway Confusion, where the pilot likely
+mistook a parallel road for the runway and corrected visually at the last moment.
+
+Main Issue: Unstable Approach / Visual Misalignment. Critical low-altitude correction required
+due to probable misidentification of the landing surface.
+Confidence: High.
+
+El Al flight ELY238 is executing an extended holding pattern over the Mediterranean Sea,
+delaying its approach to Tel Aviv during an active security event.
+Situation Analysis:
+
+
+
+
+
+Geographic Context: The aircraft is holding position approximately 20-30 miles offshore,
+west of the central Israeli coast.
+Behavior: The flight path displays multiple consistent 360-degree loops (race-track or
+circular holding pattern) instead of a standard arrival vector. This indicates a deliberate
+instruction from ATC to delay landing.
+Context: The timing coincides with a missile attack on Israel. This pattern is a standard
+safety protocol where inbound traffic is ordered to hold in safe zones (typically over the
+sea) until the airspace is cleared or the threat passes.
+
+Main Issue: Security-Induced Holding / Airspace Closure. The deviation is a direct operational
+response to an active aerial threat, requiring the aircraft to loiter in a safe zone away from the
+target area.
+Confidence: High.
+
+

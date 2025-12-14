@@ -1,0 +1,38 @@
+# Database files
+*.db
+*.db.bak
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large binary files
+*.npy
+*.joblib
+*.pt
+*.pth
+*.exe
+
+# Large folders
+dont touch/
+.cache_frechet/
+
+# Logs
+*.log
+
+# Environment
+.env
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+

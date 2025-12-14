@@ -1,0 +1,67 @@
+{
+  "regions": {
+    "coastal_corridor": {
+      "description": "North/South low level corridor along the coastline",
+      "polygon": [
+        [
+          33.1,
+          35.05
+        ],
+        [
+          33.1,
+          34.55
+        ],
+        [
+          31.2,
+          34.55
+        ],
+        [
+          31.2,
+          35.05
+        ]
+      ]
+    },
+    "central_funnel": {
+      "description": "Ben Gurion arrival/departure funnel",
+      "polygon": [
+        [
+          32.4,
+          35.2
+        ],
+        [
+          32.4,
+          34.5
+        ],
+        [
+          31.6,
+          34.5
+        ],
+        [
+          31.6,
+          35.2
+        ]
+      ]
+    },
+    "southern_transit": {
+      "description": "Southbound transit around Ramon/Negev",
+      "polygon": [
+        [
+          31.4,
+          35.5
+        ],
+        [
+          31.4,
+          34.7
+        ],
+        [
+          29.5,
+          34.7
+        ],
+        [
+          29.5,
+          35.5
+        ]
+      ]
+    }
+  }
+}

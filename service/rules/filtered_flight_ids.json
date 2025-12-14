@@ -1,0 +1,144 @@
+{
+  "filtered_flights": [
+    {
+      "flight_id": "3d2e4cdb",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d359abb",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d359f7d",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d390cc0",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d31eccd",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d2f4529",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d31f6ef",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d3900c9",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d31d7ff",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d367cd0",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d36704b",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d2f18f7",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d329bdf",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d35997c",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d2f2c3c",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d2e5948",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d35a0dc",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d35a018",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d31f81c",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d313b96",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d39eb71",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d3411e8",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d31fa06",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d2f48e3",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d304f69",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d341b98",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d32ef4d",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d350b30",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d2f3606",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d31472e",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d3ae7c0",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d367aae",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d31f860",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d390732",
+      "reason": "No point above 5600.0 ft"
+    },
+    {
+      "flight_id": "3d32e4ca",
+      "reason": "No point above 5600.0 ft"
+    }
+  ]
+}
