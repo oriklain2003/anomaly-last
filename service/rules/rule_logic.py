@@ -115,8 +115,6 @@ _lb_star_file = Path(LEARNED_BEHAVIOR_CFG.get("star_file", "rules/learned_star.j
 LEARNED_STAR_FILE = (_lb_star_file if _lb_star_file.is_absolute() else (PROJECT_ROOT / _lb_star_file)).resolve()
 TURN_ZONE_TOLERANCE_NM = float(LEARNED_BEHAVIOR_CFG.get("turn_zone_tolerance_nm", 3.0))
 SID_STAR_TOLERANCE_NM = float(LEARNED_BEHAVIOR_CFG.get("sid_star_tolerance_nm", 2.5))
-MODERATE_TURN_MIN_DEG = float(LEARNED_BEHAVIOR_CFG.get("turn_angle_min_deg", 45.0))
-MODERATE_TURN_MAX_DEG = float(LEARNED_BEHAVIOR_CFG.get("turn_angle_max_deg", 300.0))
 
 
 def _load_learned_turns(refresh: bool = False) -> List[Dict[str, Any]]:
@@ -860,92 +858,6 @@ def _rule_abrupt_turn(ctx: RuleContext) -> RuleResult:
             })
 
     # ==========================================================
-    # ========== 1b. Moderate Gradual Turn Detection ===========
-    # ==========================================================
-    # Detect turns >= MODERATE_TURN_MIN_DEG accumulated over a sliding window
-    # that are NOT in learned zones. This catches S-turns and vectoring.
-    
-    MODERATE_TURN_WINDOW_S = 180  # 3 minute window for accumulated turn
-    MODERATE_TURN_MIN_SPEED = 150  # kts - must be moving at reasonable speed
-    MODERATE_TURN_MIN_ALT = 2000   # ft - above pattern altitude
-    
-    def _calc_accumulated_turn(start_idx: int, end_idx: int) -> float:
-        """Calculate accumulated heading change between two indices."""
-        total = 0.0
-        for j in range(start_idx + 1, end_idx + 1):
-            if points[j].track is None or points[j-1].track is None:
-                continue
-            delta = _heading_diff(points[j].track, points[j-1].track)
-            total += abs(delta)
-        return total
-    
-    # Track detected moderate turn windows to avoid duplicates
-    moderate_turn_windows = []
-    
-    for i in range(len(points)):
-        start_p = points[i]
-        if start_p.track is None:
-            continue
-        if (start_p.gspeed or 0) < MODERATE_TURN_MIN_SPEED:
-            continue
-        if (start_p.alt or 0) < MODERATE_TURN_MIN_ALT:
-            continue
-        
-        # Look for end point within window
-        for j in range(i + 3, len(points)):  # Need at least 3 points for a turn
-            end_p = points[j]
-            duration = end_p.timestamp - start_p.timestamp
-            
-            if duration < 30:  # Minimum 30 seconds
-                continue
-            if duration > MODERATE_TURN_WINDOW_S:
-                break
-            
-            if end_p.track is None:
-                continue
-            if (end_p.gspeed or 0) < MODERATE_TURN_MIN_SPEED:
-                continue
-            if (end_p.alt or 0) < MODERATE_TURN_MIN_ALT:
-                continue
-            
-            # Calculate accumulated turn
-            acc_turn = _calc_accumulated_turn(i, j)
-            
-            # Check if this is a moderate turn (>= threshold but < extreme)
-            if acc_turn >= MODERATE_TURN_MIN_DEG and acc_turn < TURN_THRESHOLD_DEG:
-                # Find midpoint of turn
-                mid_idx = (i + j) // 2
-                mid_p = points[mid_idx]
-                
-                # ONLY flag if NOT in a learned turn zone
-                # (We don't check SID/STAR here because a turn NOT in a learned
-                # turn zone is unusual even if near a procedure path)
-                if not _is_point_in_learned_turn(mid_p.lat, mid_p.lon):
-                    # Check for overlap with already detected windows
-                    overlap = False
-                    for (ws, we) in moderate_turn_windows:
-                        if not (j < ws or i > we):  # Overlapping
-                            overlap = True
-                            break
-                    
-                    if not overlap:
-                        moderate_turn_windows.append((i, j))
-                        events.append({
-                            "type": "moderate_turn_outside_zone",
-                            "timestamp": mid_p.timestamp,
-                            "start_ts": start_p.timestamp,
-                            "end_ts": end_p.timestamp,
-                            "duration_s": duration,
-                            "accumulated_turn_deg": round(acc_turn, 1),
-                            "lat": mid_p.lat,
-                            "lon": mid_p.lon,
-                            "alt_ft": mid_p.alt,
-                            "start_heading": start_p.track,
-                            "end_heading": end_p.track,
-                        })
-                        break  # Found a turn from this start, move on
-
-    # ==========================================================
     # ========== 2. NEW → Clean Holding Pattern Detection =======
     # ==========================================================
 
@@ -1176,13 +1088,21 @@ def _rule_abrupt_turn(ctx: RuleContext) -> RuleResult:
                 acc = heading_acc(slice_pts)
                 if acc < MIN_HEADING_ACC:
                     continue
-
-                # Suppress if within learned corridors, UNLESS the turn is extreme
-                # An extreme turn (>500° accumulated or ratio >2.5) is unusual even in
-                # a normal corridor and should still be flagged.
-                is_extreme_turn = acc >= 500 or ratio >= 2.5
                 
-                if not is_extreme_turn:
+                # Sanity check: reject impossible turn rates (GPS glitches)
+                # A realistic aircraft can turn at most ~6 deg/sec sustained
+                avg_turn_rate = acc / duration if duration > 0 else 999
+                if avg_turn_rate > 6.0:
+                    continue  # Impossible turn rate - likely GPS glitches
+
+                # Determine if this is a TRUE 360 turn (actual orbit/circle) vs just
+                # high cumulative heading change from following a curved path.
+                # A true 360 turn has high path/displacement ratio (aircraft loops back).
+                # High cumulative turns with low ratio are just following curved routes.
+                is_true_360_turn = ratio >= 2.0
+                
+                # For non-360 turns (following curved paths), suppress if on learned path
+                if not is_true_360_turn:
                     polygons = _get_learned_polygons()
                     is_suppressed = False
                     latlon = (end.lat, end.lon)
