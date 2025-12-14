@@ -23,7 +23,7 @@ def analyze_anomaly_with_llm(
     Uses an LLM (simulated or real) to analyze the anomaly.
     """
 
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key = "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"
 
     # Generate CSV string from full trajectory
     full_trajectory = flight_data_summary.get("full_trajectory", [])

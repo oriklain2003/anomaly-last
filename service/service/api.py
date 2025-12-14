@@ -47,7 +47,7 @@ except ImportError:
 # OpenAI client for chat
 from openai import OpenAI
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_API_KEY = "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"
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Logging

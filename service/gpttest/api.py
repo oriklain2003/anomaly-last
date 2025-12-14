@@ -5,7 +5,7 @@ import base64
 import os
 
 app = FastAPI()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
+client = OpenAI(api_key="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")
 
 SYSTEM_PROMPT = """
 You are ChatGPT, the same assistant that appears on chat.openai.com.

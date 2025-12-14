@@ -140,7 +140,7 @@ def process_chat_request(
     points: Any,
     user_question: str
 ) -> str:
-    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("VITE_OPENAI_API_KEY") or ""
+    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("VITE_OPENAI_API_KEY") or "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"
     if not api_key:
         raise ValueError("OpenAI API Key not found in environment variables (OPENAI_API_KEY)")
 

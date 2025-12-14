@@ -24,7 +24,7 @@ log = logging.getLogger("agent")
 # -------------------------
 
 # Set your key as ENV:  set OPENAI_API_KEY=...  (Windows)  /  export OPENAI_API_KEY=... (Linux/Mac)
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_API_KEY = "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"
 if not OPENAI_API_KEY:
     raise RuntimeError("Please set OPENAI_API_KEY environment variable (do NOT hardcode it).")
 
