@@ -310,6 +310,12 @@ export function DesktopApp() {
         </div>
         <div className="flex flex-1 justify-end gap-2">
             <Link
+                to="/intelligence"
+                className="flex h-10 px-3 items-center justify-center rounded-lg bg-surface-highlight text-white/80 hover:text-white transition-colors border border-white/10 text-sm font-bold no-underline"
+            >
+                Intelligence
+            </Link>
+            <Link
                 to="/explorer"
                 className="flex h-10 px-3 items-center justify-center rounded-lg bg-surface-highlight text-white/80 hover:text-white transition-colors border border-white/10 text-sm font-bold no-underline"
             >

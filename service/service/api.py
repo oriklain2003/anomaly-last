@@ -91,7 +91,7 @@ PROJECT_ROOT = BASE_DIR.parent
 CACHE_DB_PATH = PROJECT_ROOT / "flight_cache.db"
 DB_ANOMALIES_PATH = PROJECT_ROOT / "realtime/live_anomalies.db"
 DB_TRACKS_PATH = PROJECT_ROOT / "realtime/live_tracks.db"
-DB_RESEARCH_PATH = PROJECT_ROOT / "realtime/research.db"
+DB_RESEARCH_PATH = PROJECT_ROOT / "realtime/research.db"  # Historical research database
 PRESENT_DB_PATH = BASE_DIR / "present_anomalies.db"
 
 
@@ -2754,7 +2754,7 @@ Behave like the original ChatGPT:
     * anomalies_tracks(flight_id, timestamp, lat, lon, alt, gspeed, vspeed, track, squawk, callsign, source)
     * normal_tracks(flight_id, timestamp, lat, lon, alt, gspeed, vspeed, track, squawk, callsign, source)
     * **RULE:** All SQL queries MUST use a LIMIT clause (e.g., LIMIT 100).
-4. TOOLS USING: After you called a tool it will be executed, and after it you will get the same question but with the tool result in the context (agent: Tool resualt:),
+4. TOOLS USING: After you called a tool it will be executed, and after it you will get the same question but with the tool result in the context (user: Tool resualt:),
     DO NOT call <tool> and <final> in the same answer!!!.
     when you call final you are ending the question loop causing the system return the answer to the user.
 ---
@@ -2798,7 +2798,22 @@ This triggers the UI to display the flight cards interactively.
 SELECT * FROM anomaly_reports WHERE severity_cnn > 0.8 ORDER BY timestamp DESC LIMIT 5
 </fetch and return>
 
-**5. FINAL TEXT ANSWER:**
+**5. ANOMALY DNA (Pattern Analysis):**
+Use this when the user asks about:
+- Similar flights to a specific flight
+- Recurring patterns
+- Flight pattern fingerprinting  
+- Historical comparisons
+- "DNA" of an anomaly
+
+Provide the flight_id and get back pattern analysis results:
+<tool>
+anomaly_dna: abc123def456
+</tool>
+
+This returns: similar historical flights, recurring patterns, risk assessment, and insights.
+
+**6. FINAL TEXT ANSWER:**
 When the answer is complete (or accompanying the flight list), your response MUST be wrapped in a <final> block.
 
 <final>
@@ -2985,6 +3000,53 @@ def execute_aviation_weather(query: str) -> str:
         return "\n".join(lines).strip()
     except Exception as e:
         return f"Weather tool error: {e}"
+
+
+def execute_anomaly_dna(flight_id: str) -> str:
+    """
+    Execute Anomaly DNA analysis for a flight.
+    Returns a formatted string with pattern analysis results.
+    """
+    try:
+        result = intelligence_engine.get_anomaly_dna(flight_id, lookback_days=30)
+        
+        lines = [f"=== ANOMALY DNA for {flight_id} ==="]
+        
+        # Flight info
+        if result.get('flight_info'):
+            info = result['flight_info']
+            lines.append(f"Callsign: {info.get('callsign', 'Unknown')}")
+        
+        # Risk assessment
+        lines.append(f"\nRisk Assessment: {result.get('risk_assessment', 'Unknown')}")
+        lines.append(f"Pattern: {result.get('recurring_pattern', 'None detected')}")
+        
+        # Insights
+        if result.get('insights'):
+            lines.append("\nInsights:")
+            for insight in result['insights']:
+                lines.append(f"  • {insight}")
+        
+        # Similar flights
+        similar = result.get('similar_flights', [])
+        if similar:
+            lines.append(f"\nSimilar Historical Flights ({len(similar)} found):")
+            for flight in similar[:5]:
+                lines.append(f"  • {flight['flight_id']} ({flight.get('callsign', 'N/A')}) - Similarity: {flight['similarity_score']}%")
+        else:
+            lines.append("\nNo similar historical flights found.")
+        
+        # Anomalies detected
+        anomalies = result.get('anomalies_detected', [])
+        if anomalies:
+            lines.append(f"\nAnomalies Detected ({len(anomalies)}):")
+            rule_names = set(a['rule_name'] for a in anomalies)
+            for name in rule_names:
+                lines.append(f"  • {name}")
+        
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Anomaly DNA error: {e}"
 
 
 def run_reasoning_agent(
@@ -3193,14 +3255,14 @@ def run_reasoning_agent(
                     result_str = result_str[:4000] + "\n... (truncated)"
 
                 messages.append({
-                    "role": "agent",
+                    "role": "user",
                     "content": f"Tool result (sql):\n{result_str}"
                 })
                 continue
             except Exception as e:
                 logger.error(f"[REASONING AGENT] SQL tool parsing error: {e}")
                 messages.append({
-                    "role": "agent",
+                    "role": "user",
                     "content": f"Tool error: {e}"
                 })
                 continue
@@ -3268,7 +3330,38 @@ def run_reasoning_agent(
                 })
                 continue
 
-        # 6) No tools and no <final> - assume this is the final response
+        # 6) Anomaly DNA tool usage?
+        if "<tool>" in msg and "anomaly_dna:" in msg.lower():
+            try:
+                tool_block = msg.split("<tool>")[1].split("</tool>")[0]
+                flight_id_query = tool_block.split("anomaly_dna:", 1)[1].strip()
+
+                # Strip quotes if present
+                if flight_id_query.startswith('"') and flight_id_query.endswith('"'):
+                    flight_id_query = flight_id_query[1:-1]
+                elif flight_id_query.startswith("'") and flight_id_query.endswith("'"):
+                    flight_id_query = flight_id_query[1:-1]
+
+                logger.info(f"[REASONING AGENT] Anomaly DNA tool call: {flight_id_query}")
+                dna_result = execute_anomaly_dna(flight_id_query)
+
+                if len(dna_result) > 4000:
+                    dna_result = dna_result[:4000] + "\n... (truncated)"
+
+                messages.append({
+                    "role": "user",
+                    "content": f"Tool result (anomaly_dna):\n{dna_result}"
+                })
+                continue
+            except Exception as e:
+                logger.error(f"[REASONING AGENT] Anomaly DNA tool parsing error: {e}")
+                messages.append({
+                    "role": "user",
+                    "content": f"Anomaly DNA tool error: {e}"
+                })
+                continue
+
+        # 7) No tools and no <final> - assume this is the final response
         logger.info("[REASONING AGENT] No tool call or <final> detected, returning raw message")
         return {"type": "message", "response": msg.strip()}
 
@@ -3376,6 +3469,500 @@ def reasoning_endpoint(request: ReasoningRequest):
 
     except Exception as e:
         logger.error(f"[REASONING API] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Intelligence Dashboard API Endpoints
+# ============================================================================
+
+# Initialize analytics engines
+try:
+    # Try importing from service.analytics (when run from root via rrunapi2.py)
+    from service.analytics import (
+        StatisticsEngine,
+        TrendsAnalyzer,
+        IntelligenceEngine,
+        PredictiveAnalytics
+    )
+except ImportError:
+    # Fallback to analytics (when run directly from service directory)
+    import sys
+    from pathlib import Path as PathLib
+    parent_dir = str(PathLib(__file__).resolve().parent.parent)
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    
+    from analytics import (
+        StatisticsEngine,
+        TrendsAnalyzer,
+        IntelligenceEngine,
+        PredictiveAnalytics
+    )
+
+ANALYTICS_DB_PATHS = {
+    'live': DB_TRACKS_PATH,
+    'research': DB_RESEARCH_PATH,
+    'anomalies': DB_ANOMALIES_PATH
+}
+
+stats_engine = StatisticsEngine(ANALYTICS_DB_PATHS)
+trends_analyzer = TrendsAnalyzer(ANALYTICS_DB_PATHS)
+intelligence_engine = IntelligenceEngine(ANALYTICS_DB_PATHS)
+predictive_analytics = PredictiveAnalytics(ANALYTICS_DB_PATHS)
+
+# Import cache management functions
+from service.analytics.statistics import clear_stats_cache, get_cache_info
+
+
+# Cache Management Endpoints
+@app.post("/api/cache/clear")
+def clear_cache():
+    """Clear all cached statistics data."""
+    count = clear_stats_cache()
+    return {"status": "ok", "cleared_entries": count}
+
+
+@app.get("/api/cache/info")
+def cache_info():
+    """Get cache statistics."""
+    return get_cache_info()
+
+
+# Level 1: Statistics Endpoints
+@app.get("/api/stats/overview")
+def get_stats_overview(start_ts: int, end_ts: int, force_refresh: bool = False):
+    """Get overview statistics for dashboard."""
+    try:
+        return stats_engine.get_overview_stats(start_ts, end_ts, use_cache=not force_refresh)
+    except Exception as e:
+        logger.error(f"Error in stats overview: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/safety/emergency-codes")
+def get_emergency_codes_stats(start_ts: int, end_ts: int):
+    """Get emergency code statistics broken down by code and airline."""
+    try:
+        return stats_engine.get_emergency_codes_stats(start_ts, end_ts)
+    except Exception as e:
+        logger.error(f"Error in emergency codes stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/safety/near-miss")
+def get_near_miss_events(start_ts: int, end_ts: int, severity: Optional[str] = None):
+    """Get near-miss (proximity) events."""
+    try:
+        return stats_engine.get_near_miss_events(start_ts, end_ts, severity)
+    except Exception as e:
+        logger.error(f"Error in near-miss stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/safety/go-arounds")
+def get_go_around_stats(start_ts: int, end_ts: int, airport: Optional[str] = None):
+    """Get go-around statistics."""
+    try:
+        return stats_engine.get_go_around_stats(start_ts, end_ts, airport)
+    except Exception as e:
+        logger.error(f"Error in go-around stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/traffic/flights-per-day")
+def get_flights_per_day(start_ts: int, end_ts: int, force_refresh: bool = False):
+    """Get flight counts per day."""
+    try:
+        return stats_engine.get_flights_per_day(start_ts, end_ts, use_cache=not force_refresh)
+    except Exception as e:
+        logger.error(f"Error in flights per day: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/traffic/busiest-airports")
+def get_busiest_airports(start_ts: int, end_ts: int, limit: int = 10, force_refresh: bool = False):
+    """Get busiest airports."""
+    try:
+        return stats_engine.get_busiest_airports(start_ts, end_ts, limit, use_cache=not force_refresh)
+    except Exception as e:
+        logger.error(f"Error in busiest airports: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/traffic/signal-loss")
+def get_signal_loss_locations(start_ts: int, end_ts: int, limit: int = 50):
+    """Get geographic distribution of signal loss events.
+    
+    Args:
+        start_ts: Start timestamp
+        end_ts: End timestamp
+        limit: Max zones to return (default 50, prevents browser overload)
+    """
+    try:
+        return stats_engine.get_signal_loss_locations(start_ts, end_ts, limit)
+    except Exception as e:
+        logger.error(f"Error in signal loss stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Level 2: Insights Endpoints
+@app.get("/api/insights/airline-efficiency")
+def get_airline_efficiency(start_ts: int = 0, end_ts: int = 0, route: Optional[str] = None):
+    """Compare airline efficiency by analyzing holding patterns per airline.
+    
+    Holding time is extracted from Rule 3 (360-degree turns) in anomaly reports.
+    """
+    try:
+        return trends_analyzer.get_airline_efficiency(start_ts, end_ts, route)
+    except Exception as e:
+        logger.error(f"Error in airline efficiency: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/insights/holding-patterns")
+def get_holding_patterns(start_ts: int, end_ts: int):
+    """Analyze holding patterns and estimate costs."""
+    try:
+        return trends_analyzer.get_holding_pattern_analysis(start_ts, end_ts)
+    except Exception as e:
+        logger.error(f"Error in holding patterns: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/insights/alternate-airports")
+def get_alternate_airports(airport: str, event_date: Optional[int] = None):
+    """Analyze where flights divert when primary airport is unavailable."""
+    try:
+        return trends_analyzer.get_alternate_airports(airport, event_date)
+    except Exception as e:
+        logger.error(f"Error in alternate airports: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Level 3: Intelligence Endpoints
+@app.get("/api/intel/gps-jamming")
+def get_gps_jamming(start_ts: int, end_ts: int, limit: int = 30):
+    """Get GPS jamming/signal loss heatmap data.
+    
+    Args:
+        start_ts: Start timestamp
+        end_ts: End timestamp
+        limit: Max zones to return (default 30, prevents browser overload)
+    """
+    try:
+        return intelligence_engine.get_gps_jamming_heatmap(start_ts, end_ts, limit)
+    except Exception as e:
+        logger.error(f"Error in GPS jamming: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/intel/military-patterns")
+def get_military_patterns(start_ts: int, end_ts: int,
+                         country: Optional[str] = None,
+                         aircraft_type: Optional[str] = None):
+    """Track military aircraft patterns."""
+    try:
+        return intelligence_engine.get_military_patterns(start_ts, end_ts, country, aircraft_type)
+    except Exception as e:
+        logger.error(f"Error in military patterns: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/intel/anomaly-dna/{flight_id}")
+def get_anomaly_dna(flight_id: str):
+    """Find similar historical flights (pattern fingerprinting)."""
+    try:
+        return intelligence_engine.get_anomaly_dna(flight_id)
+    except Exception as e:
+        logger.error(f"Error in anomaly DNA: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Level 4: Predictive Endpoints
+@app.get("/api/predict/airspace-risk")
+def get_airspace_risk():
+    """Calculate real-time airspace risk score."""
+    try:
+        return predictive_analytics.calculate_airspace_risk()
+    except Exception as e:
+        logger.error(f"Error in airspace risk: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class TrajectoryPredictRequest(BaseModel):
+    flight_id: str
+    current_position: Dict[str, float]  # {lat, lon, alt, heading, speed}
+
+
+@app.post("/api/predict/trajectory")
+def predict_trajectory(request: TrajectoryPredictRequest):
+    """Predict flight trajectory for next 3-5 minutes."""
+    try:
+        return predictive_analytics.predict_trajectory(
+            request.flight_id,
+            request.current_position
+        )
+    except Exception as e:
+        logger.error(f"Error in trajectory prediction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/predict/safety-forecast")
+def get_safety_forecast(hours_ahead: int = 24):
+    """Forecast expected number of safety events in next N hours."""
+    try:
+        return predictive_analytics.forecast_safety_events(hours_ahead)
+    except Exception as e:
+        logger.error(f"Error in safety forecast: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/predict/hostile-intent/{flight_id}")
+def predict_hostile_intent(flight_id: str):
+    """
+    Predict hostile intent for a flight based on its track behavior.
+    
+    Analyzes:
+    - Proximity to sensitive zones
+    - Heading changes toward restricted areas
+    - Altitude profile anomalies
+    - Speed anomalies
+    - Operator history
+    
+    Returns intent score (0-100), risk level, and detailed factors.
+    """
+    try:
+        # Get track data for the flight
+        track_data = []
+        
+        # Try research.db first
+        if DB_RESEARCH_PATH.exists():
+            conn = sqlite3.connect(str(DB_RESEARCH_PATH))
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            for table_name in ['anomalies_tracks', 'normal_tracks']:
+                try:
+                    cursor.execute(f"""
+                        SELECT timestamp, lat, lon, alt, track, gspeed, callsign
+                        FROM {table_name}
+                        WHERE flight_id = ?
+                        ORDER BY timestamp DESC
+                        LIMIT 100
+                    """, (flight_id,))
+                    rows = cursor.fetchall()
+                    if rows:
+                        track_data = [dict(r) for r in rows]
+                        break
+                except:
+                    continue
+            conn.close()
+        
+        # Fallback to live tracks
+        if not track_data and DB_TRACKS_PATH.exists():
+            conn = sqlite3.connect(str(DB_TRACKS_PATH))
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT timestamp, lat, lon, alt, track, gspeed, callsign
+                FROM flight_tracks
+                WHERE flight_id = ?
+                ORDER BY timestamp DESC
+                LIMIT 100
+            """, (flight_id,))
+            rows = cursor.fetchall()
+            if rows:
+                track_data = [dict(r) for r in rows]
+            conn.close()
+        
+        if not track_data:
+            raise HTTPException(status_code=404, detail=f"No track data found for flight {flight_id}")
+        
+        return predictive_analytics.predict_hostile_intent(flight_id, track_data)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in hostile intent prediction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/predict/trajectory/{flight_id}")
+def predict_trajectory(flight_id: str, current_position: Dict[str, float] = None):
+    """
+    Predict flight trajectory for the next 5 minutes.
+    
+    If current_position is not provided, uses the latest track point from the database.
+    
+    Returns predicted path and any restricted zone breach warnings.
+    """
+    try:
+        # Get current position if not provided
+        if not current_position:
+            # Try to get latest position from database
+            latest_point = None
+            
+            if DB_TRACKS_PATH.exists():
+                conn = sqlite3.connect(str(DB_TRACKS_PATH))
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT lat, lon, alt, track, gspeed
+                    FROM flight_tracks
+                    WHERE flight_id = ?
+                    ORDER BY timestamp DESC
+                    LIMIT 1
+                """, (flight_id,))
+                row = cursor.fetchone()
+                if row:
+                    latest_point = dict(row)
+                conn.close()
+            
+            if not latest_point and DB_RESEARCH_PATH.exists():
+                conn = sqlite3.connect(str(DB_RESEARCH_PATH))
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                for table_name in ['anomalies_tracks', 'normal_tracks']:
+                    try:
+                        cursor.execute(f"""
+                            SELECT lat, lon, alt, track, gspeed
+                            FROM {table_name}
+                            WHERE flight_id = ?
+                            ORDER BY timestamp DESC
+                            LIMIT 1
+                        """, (flight_id,))
+                        row = cursor.fetchone()
+                        if row:
+                            latest_point = dict(row)
+                            break
+                    except:
+                        continue
+                conn.close()
+            
+            if not latest_point:
+                raise HTTPException(status_code=404, detail=f"No position data found for flight {flight_id}")
+            
+            current_position = {
+                'lat': latest_point['lat'],
+                'lon': latest_point['lon'],
+                'alt': latest_point.get('alt', 0),
+                'heading': latest_point.get('track', 0),
+                'speed': latest_point.get('gspeed', 300)
+            }
+        
+        return predictive_analytics.predict_trajectory(flight_id, current_position)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in trajectory prediction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Additional Level 1 & 2 Endpoints for missing features
+@app.get("/api/stats/diversions")
+def get_diversion_stats(start_ts: int, end_ts: int):
+    """Get diversion and route deviation statistics."""
+    try:
+        return stats_engine.get_diversion_stats(start_ts, end_ts)
+    except Exception as e:
+        logger.error(f"Error in diversion stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/rtb-events")
+def get_rtb_events(start_ts: int, end_ts: int, max_duration_min: int = 30):
+    """Get Return-To-Base (RTB) events - flights that took off and landed at same airport."""
+    try:
+        return stats_engine.get_rtb_events(start_ts, end_ts, max_duration_min)
+    except Exception as e:
+        logger.error(f"Error in RTB events: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stats/runway-usage")
+def get_runway_usage(airport: str, start_ts: int, end_ts: int):
+    """Get runway usage statistics for a specific airport."""
+    try:
+        return stats_engine.get_runway_usage(airport, start_ts, end_ts)
+    except Exception as e:
+        logger.error(f"Error in runway usage: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/trends/monthly")
+def get_monthly_trends(start_ts: int, end_ts: int):
+    """Get monthly flight and anomaly trends."""
+    try:
+        return trends_analyzer.get_monthly_trends(start_ts, end_ts)
+    except Exception as e:
+        logger.error(f"Error in monthly trends: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/trends/peak-hours")
+def get_peak_hours(start_ts: int, end_ts: int):
+    """Get peak traffic hours and safety correlation."""
+    try:
+        result = trends_analyzer.get_peak_hours_analysis(start_ts, end_ts)
+        # Transform to frontend-expected format
+        traffic_by_hour = result.get('traffic_by_hour', {})
+        safety_by_hour = result.get('safety_by_hour', {})
+        
+        # Build hourly_data array
+        hourly_data = []
+        for hour in range(24):
+            hourly_data.append({
+                'hour': hour,
+                'traffic': traffic_by_hour.get(hour, 0),
+                'safety_events': safety_by_hour.get(hour, 0)
+            })
+        
+        # Find peak safety hours (top 3)
+        peak_safety_hours = sorted(
+            [(h, safety_by_hour.get(h, 0)) for h in range(24)],
+            key=lambda x: x[1],
+            reverse=True
+        )[:3]
+        
+        return {
+            'peak_traffic_hours': result.get('peak_hours', []),
+            'peak_safety_hours': [h for h, _ in peak_safety_hours],
+            'correlation_score': result.get('correlation_score', 0),
+            'hourly_data': hourly_data
+        }
+    except Exception as e:
+        logger.error(f"Error in peak hours: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/trends/alternate-airports")
+def get_alternate_airports_trend(start_ts: int, end_ts: int):
+    """Get alternate airports used during diversions in a time period."""
+    try:
+        return trends_analyzer.get_alternate_airports_by_time(start_ts, end_ts)
+    except Exception as e:
+        logger.error(f"Error in alternate airports: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Anomaly DNA endpoints
+@app.get("/api/intelligence/anomaly-dna/{flight_id}")
+def get_anomaly_dna(flight_id: str, lookback_days: int = 30):
+    """Get pattern fingerprinting for a specific flight - find similar historical flights."""
+    try:
+        return intelligence_engine.get_anomaly_dna(flight_id, lookback_days)
+    except Exception as e:
+        logger.error(f"Error in anomaly DNA: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/intelligence/pattern-clusters")
+def get_pattern_clusters(start_ts: int, end_ts: int, min_occurrences: int = 3):
+    """Detect recurring suspicious patterns across multiple flights."""
+    try:
+        return intelligence_engine.detect_pattern_clusters(start_ts, end_ts, min_occurrences)
+    except Exception as e:
+        logger.error(f"Error in pattern clusters: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
